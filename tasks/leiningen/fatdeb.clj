@@ -102,7 +102,6 @@
                            (get-version project) "_"
                            "all" ".deb")
         deb-file (file (:root project) "target" deb-file-name)]
-    (println deb-file-name deb-file)
     (write (str deb-file ".md5")
            (str (md5 (slurp deb-file)) "  " deb-file-name))))
 
