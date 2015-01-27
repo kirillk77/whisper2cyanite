@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -e
+
+readonly VERSION=0.0.1
+readonly JAR_FILE="whisper2cyanite-$VERSION-standalone.jar"
+readonly JAVA_CMD="java -jar"
+
+readonly SCRIPT_DIR=$(dirname $0)
+readonly LIB_FILE=/usr/lib/whisper2cyanite/whisper2cyanite.jar
+readonly NEAR_FILE=$SCRIPT_DIR/$JAR_FILE
+readonly UBERJAR_FILE=$SCRIPT_DIR/target/uberjar/$JAR_FILE
+
+if [ -f $LIB_FILE ]; then
+	$JAVA_CMD $LIB_FILE $*
+elif [ -f $NEAR_FILE ]; then
+	$JAVA_CMD $NEAR_FILE $*
+elif [ -f $UBERJAR_FILE ]; then
+	$JAVA_CMD $UBERJAR_FILE $*
+else
+	echo "File '$JAR_FILE' not found!"
+	exit 1
+fi
