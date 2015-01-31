@@ -4,21 +4,12 @@
             [com.climate.claypoole :as cp]
             [clojure.java.io :as io]
             [clj-progress.core :as prog]
+            [whisper2cyanite.utils :as utils]
             [whisper2cyanite.metric-store :as mstore]
             [whisper2cyanite.path-store :as pstore]))
 
 (def ^:const default-jobs 1)
 (def ^:const default-min-ttl 3600)
-
-(defn- now
-  "Get now as a Unix epoch."
-  []
-  (quot (System/currentTimeMillis) 1000))
-
-(defn- get-future
-  "Get now + year as a Unix epoch."
-  []
-  (+ (now) 31536000))
 
 (defn- migrate-archive
   "Migrate an archive."
@@ -38,7 +29,7 @@
       (let [time (first point)
             value (last point)]
         (when-not (= time 0)
-          (let [ttl (- time (- (now) retention))]
+          (let [ttl (- time (- (utils/now) retention))]
             (when (> ttl min-ttl)
               (when run
                 (when-not disable-metric-store
@@ -75,7 +66,7 @@
   (let [files (sort (whisper/get-paths dir))
         files-count (count files)
         from (if from from 0)
-        to (if to to (get-future))
+        to (if to to utils/epoch-future)
         jobs (:jobs options default-jobs)
         pool (cp/threadpool jobs)
         mstore (mstore/cassandra-metric-store cass-host options)

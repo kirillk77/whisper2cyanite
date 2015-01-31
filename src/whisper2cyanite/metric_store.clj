@@ -8,14 +8,15 @@
 
 (def ^:const default-cassandra-keyspace "metric")
 
+(def cassandra-cql
+  (str
+   "UPDATE metric USING TTL ? SET data = ? "
+   "WHERE tenant = ? AND rollup = ? AND period = ? AND path = ? AND time = ?;"))
+
 (defn get-cassandra-query
   "Get a Cassandra prepared statement."
   [session]
-  (alia/prepare
-   session
-   (str
-    "UPDATE metric USING TTL ? SET data = ? "
-    "WHERE tenant = ? AND rollup = ? AND period = ? AND path = ? AND time = ?;")))
+  (alia/prepare session cassandra-cql))
 
 (defn cassandra-metric-store
   "Cassandra metric store."
@@ -30,6 +31,7 @@
         (alia/execute session insert!
                       {:values [(int ttl) [(double value)] (str tenant)
                                 (int rollup) (int period) (str path)
-                                (long time)]}))
+                                (long time)]
+                       :consistency :any}))
       (shutdown [this]
         (.close session)))))
