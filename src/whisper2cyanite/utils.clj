@@ -14,10 +14,6 @@
      (while ~test
        ~body)))
 
-(defmacro go-forever
-  [body]
-  `(go-while true ~body))
-
 (defn partition-or-time
   "Returns a channel that will either contain vectors of n items taken from ch or
   if beat-rate millis elapses then a vector with the available items. The
