@@ -70,9 +70,10 @@
   [command arguments options summary]
   (check-arguments "migrate" arguments 4 4)
   (check-options command #{:from :to :run :rollups :jobs :min-ttl
-                           :cassandra-keyspace :elasticsearch-index
-                           :disable-progress :disable-metric-store
-                           :disable-path-store} options)
+                           :cassandra-keyspace :cassandra-channel-size
+                           :cassandra-batch-size :disable-metric-store
+                           :elasticsearch-index :disable-path-store
+                           :disable-progress} options)
   (let [dir (nth arguments 0)
         tenant (nth arguments 1)
         cass-host (nth arguments 2)
@@ -119,11 +120,21 @@
     :validate [#(< 0 %)]]
    [nil "--cassandra-keyspace KEYSPACE"
     (str "Cassandra keyspace. Default: " mstore/default-cassandra-keyspace)]
+   [nil "--cassandra-channel-size SIZE"
+    (str "Cassandra channel size. Default: "
+         mstore/default-cassandra-channel-size)
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 %)]]
+   [nil "--cassandra-batch-size SIZE"
+    (str "Cassandra batch size. Default: "
+         mstore/default-cassandra-batch-size)
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 %)]]
+   [nil "--disable-metric-store" "Disable writing to metric store"]
    [nil "--elasticsearch-index INDEX"
     (str "Elasticsearch index. Default: " pstore/default-es-index)]
-   ["-P" "--disable-progress" "Disable progress bar"]
-   [nil "--disable-metric-store" "Disable writing to metric store"]
-   [nil "--disable-path-store" "Disable writing to path store"]])
+   [nil "--disable-path-store" "Disable writing to path store"]
+   ["-P" "--disable-progress" "Disable progress bar"]])
 
 (defn- run-command
   "Run command."

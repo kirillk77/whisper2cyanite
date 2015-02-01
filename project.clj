@@ -8,6 +8,7 @@
                  [clj-whisper "0.1.0"]
                  [org.clojure/tools.cli "0.3.1"]
                  [cc.qbits/alia "2.3.1"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [clojurewerkz/elastisch "2.1.0"]
                  [com.climate/claypoole "0.4.0"]
                  [intervox/clj-progress "0.1.6"]]
