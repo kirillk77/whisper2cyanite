@@ -1,7 +1,7 @@
 (ns whisper2cyanite.metric-store
   (:require [qbits.alia :as alia]
             [qbits.alia.policy.load-balancing :as alia_lbp]
-            [clojure.core.async :refer [chan <! take! >!!]]
+            [clojure.core.async :as async]
             [whisper2cyanite.utils :as utils])
   (:import [com.datastax.driver.core
             BatchStatement
@@ -35,20 +35,23 @@
 
 (defn- get-channel
   "Get store channel."
-  [session statement chan_size batch_size]
-  (let [ch (chan chan_size)
+  [session statement chan_size batch_size data-stored?]
+  (let [ch (async/chan chan_size)
         ch-p (utils/partition-or-time batch_size ch batch_size 5)]
-    (utils/go-forever
-     (let [values (<! ch-p)]
-       (try
-         (take!
-          (alia/execute-chan session (batch statement values)
-                             {:consistency :any})
-          (fn [rows-or-e]
-            (if (instance? Throwable rows-or-e)
-              (println rows-or-e "Cassandra error"))))
-         (catch Exception e
-           (println e "Store processing exception")))))
+    (utils/go-while (not @data-stored?)
+                    (let [values (async/<! ch-p)]
+                      (if values
+                        (try
+                          (async/take!
+                           (alia/execute-chan session (batch statement values)
+                                              {:consistency :any})
+                           (fn [rows-or-e]
+                             (if (instance? Throwable rows-or-e)
+                               (println rows-or-e "Cassandra error"))))
+                          (catch Exception e
+                            (println e "Store processing exception")))
+                        (when (not @data-stored?)
+                          (swap! data-stored? (fn [_] true))))))
     ch))
 
 (defn cassandra-metric-store
@@ -60,11 +63,15 @@
         insert! (get-cassandra-query session)
         chan_size (:cassandra-channel-size options default-cassandra-channel-size)
         batch_size (:cassandra-batch-size options default-cassandra-batch-size)
-        channel (get-channel session insert! chan_size batch_size)]
+        data-stored? (atom false)
+        channel (get-channel session insert! chan_size batch_size data-stored?)]
     (reify
       MetricStore
       (insert [this tenant rollup period path time value ttl]
-        (>!! channel [(int ttl) [(double value)] (str tenant) (int rollup)
-                      (int period) (str path) (long time)]))
+        (async/>!! channel [(int ttl) [(double value)] (str tenant) (int rollup)
+                            (int period) (str path) (long time)]))
       (shutdown [this]
+        (async/close! channel)
+        (while (not @data-stored?)
+          (Thread/sleep 100))
         (.close session)))))
