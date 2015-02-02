@@ -22,9 +22,7 @@
         series (:series data)
         path-stored? (atom false)
         run (:run options false)
-        min-ttl (:min-ttl options default-min-ttl)
-        disable-metric-store (:disable-metric-store options false)
-        disable-path-store (:disable-path-store options false)]
+        min-ttl (:min-ttl options default-min-ttl)]
     (doseq [point series]
       (let [time (first point)
             value (last point)]
@@ -32,11 +30,11 @@
           (let [ttl (- time (- (utils/now) retention))]
             (when (> ttl min-ttl)
               (when run
-                (when-not disable-metric-store
+                (when mstore
                   (mstore/insert mstore tenant rollup period path time
                                  value ttl))
                 (when-not @path-stored?
-                  (when-not disable-path-store
+                  (when pstore
                     (pstore/insert pstore tenant path))
                   (swap! path-stored? (fn [_] true)))))))))))
 
@@ -69,8 +67,12 @@
         to (if to to utils/epoch-future)
         jobs (:jobs options default-jobs)
         pool (cp/threadpool jobs)
-        mstore (mstore/cassandra-metric-store cass-host options)
-        pstore (pstore/elasticsearch-metric-store es-url options)
+        mstore (if-not (:disable-metric-store options false)
+                 (mstore/cassandra-metric-store cass-host options)
+                 nil)
+        pstore (if-not (:disable-path-store options false)
+                 (pstore/elasticsearch-metric-store es-url options)
+                 nil)
         disable-progress (:disable-progress options false)
         progress-fn (if disable-progress #(println %) (fn [_] (prog/tick)))
         migrate-fn (fn [file]
@@ -88,8 +90,10 @@
       (when-not disable-progress
        (prog/done))
       (finally
-        (mstore/shutdown mstore)
-        (pstore/shutdown pstore)))))
+        (when mstore
+          (mstore/shutdown mstore))
+        (when pstore
+          (pstore/shutdown pstore))))))
 
 (defn list-paths
   "List paths."
