@@ -2,7 +2,8 @@
   (:require [clojure.string :as str]
             [clojurewerkz.elastisch.rest :as esr]
             [clojurewerkz.elastisch.rest.index :as esri]
-            [clojurewerkz.elastisch.rest.document :as esrd]))
+            [clojurewerkz.elastisch.rest.document :as esrd]
+            [clojure.tools.logging :as log]))
 
 (def ^:const default-es-index "cyanite_paths")
 (def ^:const es-def-type "path")
@@ -32,16 +33,24 @@
 (defn elasticsearch-metric-store
   "Elasticsearch path store."
   [url options]
+  (log/info "Creating the path store...")
   (let [index (:elasticsearch-index options default-es-index)
         conn (esr/connect url)
         exists-fn (partial esrd/present? conn index es-def-type)
         update-fn (partial esrd/put conn index es-def-type)]
+    (log/info (str "The path store has been created. "
+                   "URL: " url ", "
+                   "index: " index)
     (when-not (esri/exists? conn index)
-      (esri/create conn index :mappings es-type-map))
+      (log/info "Creating the path index...")
+      (esri/create conn index :mappings es-type-map)
+      (log/info "The path index has been created"))
     (reify
       PathStore
       (insert [this tenant path]
         (dorun (map #(when-not (exists-fn (:path %))
                        (update-fn (:path %) %))
                     (get-all-paths tenant path))))
-      (shutdown [this]))))
+      (shutdown [this]
+        (log/info "Shutting down the path store...")
+        (log/info "The path store has been down")))))

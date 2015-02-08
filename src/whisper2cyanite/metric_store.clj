@@ -2,6 +2,7 @@
   (:require [qbits.alia :as alia]
             [qbits.alia.policy.load-balancing :as alia_lbp]
             [clojure.core.async :as async]
+            [clojure.tools.logging :as log]
             [whisper2cyanite.utils :as utils])
   (:import [com.datastax.driver.core
             BatchStatement
@@ -57,6 +58,7 @@
 (defn cassandra-metric-store
   "Cassandra metric store."
   [host options]
+  (log/info "Creating the metric store...")
   (let [keyspace (:cassandra-keyspace options default-cassandra-keyspace)
         session (-> (alia/cluster {:contact-points host})
                     (alia/connect keyspace))
@@ -65,13 +67,20 @@
         batch_size (:cassandra-batch-size options default-cassandra-batch-size)
         data-stored? (atom false)
         channel (get-channel session insert! chan_size batch_size data-stored?)]
+    (log/info (str "The metric store has been created. "
+                   "Host: " host ", "
+                   "keyspace: " keyspace ", "
+                   "channel size: " chan_size ", "
+                   "batch size: " batch_size))
     (reify
       MetricStore
       (insert [this tenant rollup period path time value ttl]
         (async/>!! channel [(int ttl) [(double value)] (str tenant) (int rollup)
                             (int period) (str path) (long time)]))
       (shutdown [this]
+        (log/info "Shutting down the metric store...")
         (async/close! channel)
         (while (not @data-stored?)
           (Thread/sleep 100))
-        (.close session)))))
+        (.close session)
+        (log/info "The metric store has been down")))))

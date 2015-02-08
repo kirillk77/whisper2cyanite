@@ -1,7 +1,9 @@
 (ns whisper2cyanite.cli
   (:require [clojure.string :as str]
             [clojure.tools.cli :as cli]
+            [org.spootnik.logconfig :as logconfig]
             [whisper2cyanite.core :as core]
+            [whisper2cyanite.logging :as wlog]
             [whisper2cyanite.metric-store :as mstore]
             [whisper2cyanite.path-store :as pstore])
   (:gen-class))
@@ -72,7 +74,8 @@
   (check-options command #{:from :to :run :rollups :jobs :min-ttl
                            :cassandra-keyspace :cassandra-channel-size
                            :cassandra-batch-size :disable-metric-store
-                           :elasticsearch-index :disable-path-store
+                           :elasticsearch-index :disable-path-store :log-file
+                           :log-level :disable-log :ignore-errors
                            :disable-progress} options)
   (let [dir (nth arguments 0)
         tenant (nth arguments 1)
@@ -134,6 +137,13 @@
    [nil "--elasticsearch-index INDEX"
     (str "Elasticsearch index. Default: " pstore/default-es-index)]
    [nil "--disable-path-store" "Disable writing to path store"]
+   ["-l" "--log-file FILE" (str "Log file. Default: " wlog/default-log-file)]
+   ["-L" "--log-level LEVEL"
+    (str "Log level (all, trace, debug, info, warn, error, fatal, off). "
+         "Default: " wlog/default-log-level)
+    :validate [#(or (= (count %) 0)
+                    (not= (get logconfig/levels % :not-found) :not-found))]]
+   ["-I" "--ignore-errors" "Ignore non-fatal errors"]
    ["-P" "--disable-progress" "Disable progress bar"]])
 
 (defn- run-command
@@ -156,4 +166,4 @@
      errors (exit 1 (error-msg errors)))
     ;; Run command
     (run-command arguments options summary)
-  (System/exit 0)))
+    (System/exit 0)))

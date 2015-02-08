@@ -4,12 +4,16 @@
             [com.climate.claypoole :as cp]
             [clojure.java.io :as io]
             [clj-progress.core :as prog]
+            [clojure.tools.logging :as log]
             [whisper2cyanite.utils :as utils]
+            [whisper2cyanite.logging :as wlog]
             [whisper2cyanite.metric-store :as mstore]
             [whisper2cyanite.path-store :as pstore]))
 
 (def ^:const default-jobs 1)
 (def ^:const default-min-ttl 3600)
+
+(def ^:const pbar-width 35)
 
 (defn- migrate-archive
   "Migrate an archive."
@@ -31,11 +35,17 @@
             (when (> ttl min-ttl)
               (when run
                 (when mstore
-                  (mstore/insert mstore tenant rollup period path time
-                                 value ttl))
+                  (try
+                    (mstore/insert mstore tenant rollup period path time
+                                   value ttl)
+                    (catch Exception e
+                      (wlog/error "Metric store error: " e))))
                 (when-not @path-stored?
                   (when pstore
-                    (pstore/insert pstore tenant path))
+                    (try
+                      (pstore/insert pstore tenant path)
+                      (catch Exception e
+                        (wlog/error "Path store error: " e))))
                   (swap! path-stored? (fn [_] true)))))))))))
 
 (defn- migrate-file
@@ -58,42 +68,85 @@
       (finally
         (.close ra-file)))))
 
+(defn- get-paths
+  "Get paths."
+  [dir]
+  (let [paths (whisper/get-paths dir)]
+    (newline)
+    (wlog/info "Getting paths...")
+    (when-not @wlog/print-log?
+      (println "Getting paths")
+      (prog/set-progress-bar! "[:bar] :done")
+      (prog/config-progress-bar! :width pbar-width)
+      (prog/init 0)
+      (doseq [path paths]
+        (prog/tick))
+      (prog/done))
+    (wlog/info (format "Found %s paths" (count paths)))
+    (sort paths)))
+
+(defn- create-mstore
+  "Create metric store."
+  [cass-host options]
+  (if-not (:disable-metric-store options false)
+    (try
+      (mstore/cassandra-metric-store cass-host options)
+      (catch Exception e
+        (wlog/fatal "Error creating metric store: " e)))
+    nil))
+
+(defn- create-pstore
+  "Create path store."
+  [es-url options]
+  (if-not (:disable-path-store options false)
+    (try
+      (pstore/elasticsearch-metric-store es-url options)
+      (catch Exception e
+        (wlog/fatal "Error creating path store: " e)))
+    nil))
+
 (defn migrate
   "Do migration."
   [dir tenant from to cass-host es-url options]
-  (let [files (sort (whisper/get-paths dir))
-        files-count (count files)
-        from (if from from 0)
-        to (if to to utils/epoch-future)
-        jobs (:jobs options default-jobs)
-        pool (cp/threadpool jobs)
-        mstore (if-not (:disable-metric-store options false)
-                 (mstore/cassandra-metric-store cass-host options)
-                 nil)
-        pstore (if-not (:disable-path-store options false)
-                 (pstore/elasticsearch-metric-store es-url options)
-                 nil)
-        disable-progress (:disable-progress options false)
-        progress-fn (if disable-progress #(println %) (fn [_] (prog/tick)))
-        migrate-fn (fn [file]
-                     (progress-fn file)
-                     (migrate-file file dir mstore pstore tenant from to
-                                   options))]
-    (try
-      (prog/set-progress-bar!
-       "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
-      (prog/config-progress-bar! :width 35)
-      (when-not disable-progress
-        (println)
-        (prog/init files-count))
-      (dorun (cp/pmap pool migrate-fn files))
-      (when-not disable-progress
-       (prog/done))
-      (finally
-        (when mstore
-          (mstore/shutdown mstore))
-        (when pstore
-          (pstore/shutdown pstore))))))
+  (wlog/set-logging! options)
+  (try
+    (wlog/info "Starting migration")
+    (let [files (get-paths dir)
+          files-count (count files)
+          from (if from from 0)
+          to (if to to utils/epoch-future)
+          jobs (:jobs options default-jobs)
+          pool (cp/threadpool jobs)
+          mstore (create-mstore cass-host options)
+          pstore (create-pstore es-url options)
+          migrate-fn (fn [file]
+                       (wlog/info "Processing path: " file)
+                       (when-not @wlog/print-log?
+                         (prog/tick))
+                       (migrate-file file dir mstore pstore tenant from to
+                                     options))]
+      (try
+        (prog/set-progress-bar!
+         "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
+        (prog/config-progress-bar! :width pbar-width)
+        (newline)
+        (wlog/info "Migrating:")
+        (when-not @wlog/print-log?
+          (println "Migrating")
+          (prog/init files-count))
+        (dorun (cp/pmap pool migrate-fn files))
+        (when-not @wlog/print-log?
+          (prog/done))
+        (catch Exception e
+          (wlog/unhandled-error e))
+        (finally
+          (when mstore
+            (mstore/shutdown mstore))
+          (when pstore
+            (pstore/shutdown pstore)))))
+    (catch Exception e
+      (wlog/unhandled-error e)))
+  (wlog/exit 0))
 
 (defn list-paths
   "List paths."
