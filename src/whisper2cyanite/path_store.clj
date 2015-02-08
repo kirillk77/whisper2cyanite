@@ -40,7 +40,7 @@
         update-fn (partial esrd/put conn index es-def-type)]
     (log/info (str "The path store has been created. "
                    "URL: " url ", "
-                   "index: " index)
+                   "index: " index))
     (when-not (esri/exists? conn index)
       (log/info "Creating the path index...")
       (esri/create conn index :mappings es-type-map)
