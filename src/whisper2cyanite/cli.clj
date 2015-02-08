@@ -71,7 +71,7 @@
   "Run command 'migrate'."
   [command arguments options summary]
   (check-arguments "migrate" arguments 4 4)
-  (check-options command #{:from :to :run :rollups :jobs :min-ttl
+  (check-options command #{:from :to :run :rollups :jobs :min-ttl :root-dir
                            :cassandra-keyspace :cassandra-channel-size
                            :cassandra-batch-size :disable-metric-store
                            :elasticsearch-index :disable-path-store :log-file
@@ -121,6 +121,7 @@
    ["-T" "--min-ttl TTL" (str "Minimal TTL. Default: " core/default-min-ttl)
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 %)]]
+   ["-D" "--root-dir DIRECTORY" "Root directory"]
    [nil "--cassandra-keyspace KEYSPACE"
     (str "Cassandra keyspace. Default: " mstore/default-cassandra-keyspace)]
    [nil "--cassandra-channel-size SIZE"

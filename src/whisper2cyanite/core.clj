@@ -85,6 +85,19 @@
     (wlog/info (format "Found %s paths" (count paths)))
     (sort paths)))
 
+(defn- get-root-dir
+  "Get root directory."
+  [dir options]
+  (let [dir (.getCanonicalPath (io/file dir))
+        root-dir (:root-dir options nil)]
+    (if-not root-dir
+      dir
+      (let [root-dir-c (.getCanonicalPath (io/file root-dir))]
+        (when (or (> (count root-dir-c) (count dir))
+                  (not= (subs dir 0 (count root-dir-c)) root-dir-c))
+          (throw (Exception. (str "Invalid root directory: " root-dir))))
+        root-dir-c))))
+
 (defn- create-mstore
   "Create metric store."
   [cass-host options]
@@ -113,6 +126,7 @@
     (wlog/info "Starting migration")
     (let [files (get-paths dir)
           files-count (count files)
+          root-dir (get-root-dir dir options)
           from (if from from 0)
           to (if to to utils/epoch-future)
           jobs (:jobs options default-jobs)
@@ -123,7 +137,7 @@
                        (wlog/info "Processing path: " file)
                        (when-not @wlog/print-log?
                          (prog/tick))
-                       (migrate-file file dir mstore pstore tenant from to
+                       (migrate-file file root-dir mstore pstore tenant from to
                                      options))]
       (try
         (prog/set-progress-bar!
