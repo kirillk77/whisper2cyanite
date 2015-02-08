@@ -124,9 +124,9 @@
   (wlog/set-logging! options)
   (try
     (wlog/info "Starting migration")
-    (let [files (get-paths dir)
+    (let [root-dir (get-root-dir dir options)
+          files (get-paths dir)
           files-count (count files)
-          root-dir (get-root-dir dir options)
           from (if from from 0)
           to (if to to utils/epoch-future)
           jobs (:jobs options default-jobs)
