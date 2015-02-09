@@ -33,6 +33,10 @@
         (when-not (= time 0)
           (let [ttl (- time (- (utils/now) retention))]
             (when (> ttl min-ttl)
+              (log/trace
+               (format (str "Processing point: rollup: %s, period: %s, "
+                            "path: %s, time: %s, value: %s, ttl: %s")
+                       rollup period path time value ttl))
               (when run
                 (when mstore
                   (mstore/insert mstore tenant rollup period path time
