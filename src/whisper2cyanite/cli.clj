@@ -8,7 +8,7 @@
             [whisper2cyanite.path-store :as pstore])
   (:gen-class))
 
-(def cli-commands #{"migrate" "list" "info" "help"})
+(def cli-commands #{"migrate" "list" "info" "fetch" "help"})
 
 (defn- check-rollups
   "Check rollups."
@@ -32,6 +32,7 @@
         "  whisper2cyanite [options] migrate <directory> <tenant> <cassandra-host> <elasticsearch-url>"
         "  whisper2cyanite list <directory>"
         "  whisper2cyanite info <file>"
+        "  whisper2cyanite [options] fetch <file> <rollup>"
         "  whisper2cyanite help"
         ""
         "Options:"
@@ -85,8 +86,7 @@
                      (filter #(not (nil? %)))
                      (flatten)
                      (apply hash-map))]
-    (core/migrate dir tenant nil nil cass-host es-url
-                  (assoc options :rollups rollups))))
+    (core/migrate dir tenant cass-host es-url (assoc options :rollups rollups))))
 
 (defn- run-list
   "Run command 'list'."
@@ -102,17 +102,29 @@
   (check-options command #{} options)
   (core/show-info (first arguments)))
 
+(defn- run-fetch
+  "Run command 'fetch'."
+  [command arguments options summary]
+  (check-arguments command arguments 2 2)
+  (check-options command #{:from :to} options)
+  (let [rollup (Integer/parseInt (second arguments))]
+    (core/fetch (first arguments) rollup options)))
+
 (defn- run-help
   "Run command 'help'."
   [command arguments options summary]
   (exit 0 (usage summary)))
 
 (def cli-options
-  [["-f" "--from FROM" "From time (Unix epoch)"]
-   ["-t" "--to TO" "To time (Unix epoch)"]
+  [["-f" "--from FROM" "From time (Unix epoch)"
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(<= 0 %)]]
+   ["-t" "--to TO" "To time (Unix epoch)"
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 %)]]
    ["-r" "--run" "Force normal run (dry run using on default)"]
    ["-R" "--rollups ROLLUPS"
-    "Override rollups. Format: <seconds_per_point[:retention],...> Example: 60,300:31536000"
+    "Define rollups. Format: <seconds_per_point[:retention],...> Example: 60,300:31536000"
     :parse-fn #(parse-rollups %)
     :validate [check-rollups]]
    ["-j" "--jobs JOBS" "Number of jobs to run simultaneously"

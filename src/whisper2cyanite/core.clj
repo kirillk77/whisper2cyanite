@@ -112,17 +112,25 @@
         (wlog/fatal "Error creating path store: " e)))
     nil))
 
+(defn- get-from-to
+  "Get and check FROM and TO time."
+  [options]
+  (let [from (:from options 0)
+        to (:to options utils/epoch-future)]
+    (when (>= from to)
+      (throw (Exception. (str "Invalid TO value: " to))))
+    {:from from :to to}))
+
 (defn- process
   "Process a Whisper database."
-  [dir tenant from to cass-host es-url options start-title title]
+  [dir tenant cass-host es-url options start-title title]
   (wlog/set-logging! options)
   (try
     (wlog/info start-title)
     (let [root-dir (get-root-dir dir options)
           files (get-paths dir)
           files-count (count files)
-          from (if from from 0)
-          to (if to to utils/epoch-future)
+          {:keys [from to]} (get-from-to options)
           jobs (:jobs options default-jobs)
           pool (cp/threadpool jobs)
           mstore (create-mstore cass-host options)
@@ -158,8 +166,8 @@
 
 (defn migrate
   "Do migration."
-  [dir tenant from to cass-host es-url options]
-  (process dir tenant from to cass-host es-url options "Starting migration"
+  [dir tenant cass-host es-url options]
+  (process dir tenant cass-host es-url options "Starting migration"
            "Migrating"))
 
 (defn list-paths
@@ -184,3 +192,31 @@
       (println "    Points:           " (:points archive))
       (println "    Offset:           " (:offset archive))
       (println "    Size:             " (str (:size archive))))))
+
+(defn- get-archive-by-rollup
+  "Get archive by rollup."
+  [archives rollup]
+  (let [archive (filter #(= rollup (:seconds-per-point %)) archives)]
+    (if (count archive)
+      (first archive)
+      nil)))
+
+(defn fetch
+  "Fetch time series."
+  [file rollup options]
+  (let [{:keys [from to]} (get-from-to options)
+        ra-file (RandomAccessFile. file "r")]
+    (try
+      (let [info (whisper/read-info-ra ra-file file)
+            archives (:archives info)
+            archive (get-archive-by-rollup archives rollup)]
+        (when-not archive
+          (throw (Exception. (str "Unknown rollup: " rollup))))
+        (let [series (:series (whisper/fetch-archive-seq-ra ra-file file archive
+                                                            from to))]
+          (doseq [point series]
+            (let [time (first point)
+                  value (last point)]
+              (println time value)))))
+      (finally
+        (.close ra-file)))))
