@@ -29,6 +29,7 @@
 
 (defprotocol PathStore
   (insert [this tenant path])
+  (exist? [this path])
   (shutdown [this]))
 
 (defn elasticsearch-metric-store
@@ -53,6 +54,11 @@
           (dorun (map #(when-not (exists-fn (:path %))
                          (update-fn (:path %) %))
                       (get-all-paths tenant path)))
+          (catch Exception e
+            (wlog/error "Path store error: " e))))
+      (exist? [this path]
+        (try
+          (exists-fn path)
           (catch Exception e
             (wlog/error "Path store error: " e))))
       (shutdown [this]

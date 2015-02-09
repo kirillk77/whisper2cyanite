@@ -15,8 +15,8 @@
 
 (def ^:const pbar-width 35)
 
-(defn- migrate-archive
-  "Migrate an archive."
+(defn- process-archive
+  "Process an archive."
   [ra-file file archive mstore pstore tenant path from to retention options]
   (let [rollup (:seconds-per-point archive)
         points (:points archive)
@@ -42,8 +42,8 @@
                     (pstore/insert pstore tenant path))
                   (swap! path-stored? (fn [_] true)))))))))))
 
-(defn- migrate-file
-  "Migrate a file."
+(defn- process-file
+  "Process a file."
   [file dir mstore pstore tenant from to options]
   (let [path (whisper/file-to-name file dir)
         ra-file (RandomAccessFile. file "r")
@@ -57,7 +57,7 @@
                       (contains? rollups seconds-per-point))
               (let [retention (get rollups seconds-per-point
                                    (:retention archive))]
-                (migrate-archive ra-file file archive mstore pstore tenant path
+                (process-archive ra-file file archive mstore pstore tenant path
                                  from to retention options))))))
       (finally
         (.close ra-file)))))
@@ -112,12 +112,12 @@
         (wlog/fatal "Error creating path store: " e)))
     nil))
 
-(defn migrate
-  "Do migration."
-  [dir tenant from to cass-host es-url options]
+(defn- process
+  "Process a Whisper database."
+  [dir tenant from to cass-host es-url options start-title title]
   (wlog/set-logging! options)
   (try
-    (wlog/info "Starting migration")
+    (wlog/info start-title)
     (let [root-dir (get-root-dir dir options)
           files (get-paths dir)
           files-count (count files)
@@ -127,22 +127,22 @@
           pool (cp/threadpool jobs)
           mstore (create-mstore cass-host options)
           pstore (create-pstore es-url options)
-          migrate-fn (fn [file]
+          process-fn (fn [file]
                        (wlog/info "Processing path: " file)
                        (when-not @wlog/print-log?
                          (prog/tick))
-                       (migrate-file file root-dir mstore pstore tenant from to
+                       (process-file file root-dir mstore pstore tenant from to
                                      options))]
       (try
         (prog/set-progress-bar!
          "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
         (prog/config-progress-bar! :width pbar-width)
         (newline)
-        (wlog/info "Migrating:")
+        (wlog/info (str title ":"))
         (when-not @wlog/print-log?
-          (println "Migrating")
+          (println title)
           (prog/init files-count))
-        (dorun (cp/pmap pool migrate-fn files))
+        (dorun (cp/pmap pool process-fn files))
         (when-not @wlog/print-log?
           (prog/done))
         (catch Exception e
@@ -155,6 +155,12 @@
     (catch Exception e
       (wlog/unhandled-error e)))
   (wlog/exit 0))
+
+(defn migrate
+  "Do migration."
+  [dir tenant from to cass-host es-url options]
+  (process dir tenant from to cass-host es-url options "Starting migration"
+           "Migrating"))
 
 (defn list-paths
   "List paths."
