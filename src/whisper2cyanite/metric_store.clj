@@ -3,7 +3,8 @@
             [qbits.alia.policy.load-balancing :as alia_lbp]
             [clojure.core.async :as async]
             [clojure.tools.logging :as log]
-            [whisper2cyanite.utils :as utils])
+            [whisper2cyanite.utils :as utils]
+            [whisper2cyanite.logging :as wlog])
   (:import [com.datastax.driver.core
             BatchStatement
             PreparedStatement]))
@@ -48,9 +49,9 @@
                                               {:consistency :any})
                            (fn [rows-or-e]
                              (if (instance? Throwable rows-or-e)
-                               (println rows-or-e "Cassandra error"))))
+                               (wlog/error "Metric store error: " rows-or-e))))
                           (catch Exception e
-                            (println e "Store processing exception")))
+                            (wlog/error "Metric store error: " e)))
                         (when (not @data-stored?)
                           (swap! data-stored? (fn [_] true))))))
     ch))
@@ -75,8 +76,12 @@
     (reify
       MetricStore
       (insert [this tenant rollup period path time value ttl]
-        (async/>!! channel [(int ttl) [(double value)] (str tenant) (int rollup)
-                            (int period) (str path) (long time)]))
+        (try
+          (async/>!! channel [(int ttl) [(double value)] (str tenant)
+                              (int rollup) (int period) (str path)
+                              (long time)])
+          (catch Exception e
+            (wlog/error "Metric store error: " e))))
       (shutdown [this]
         (log/info "Shutting down the metric store...")
         (async/close! channel)

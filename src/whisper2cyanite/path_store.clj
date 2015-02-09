@@ -3,7 +3,8 @@
             [clojurewerkz.elastisch.rest :as esr]
             [clojurewerkz.elastisch.rest.index :as esri]
             [clojurewerkz.elastisch.rest.document :as esrd]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log]
+            [whisper2cyanite.logging :as wlog]))
 
 (def ^:const default-es-index "cyanite_paths")
 (def ^:const es-def-type "path")
@@ -48,9 +49,12 @@
     (reify
       PathStore
       (insert [this tenant path]
-        (dorun (map #(when-not (exists-fn (:path %))
-                       (update-fn (:path %) %))
-                    (get-all-paths tenant path))))
+        (try
+          (dorun (map #(when-not (exists-fn (:path %))
+                         (update-fn (:path %) %))
+                      (get-all-paths tenant path)))
+          (catch Exception e
+            (wlog/error "Path store error: " e))))
       (shutdown [this]
         (log/info "Shutting down the path store...")
         (log/info "The path store has been down")))))

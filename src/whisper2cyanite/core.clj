@@ -35,17 +35,11 @@
             (when (> ttl min-ttl)
               (when run
                 (when mstore
-                  (try
-                    (mstore/insert mstore tenant rollup period path time
-                                   value ttl)
-                    (catch Exception e
-                      (wlog/error "Metric store error: " e))))
+                  (mstore/insert mstore tenant rollup period path time
+                                 value ttl))
                 (when-not @path-stored?
                   (when pstore
-                    (try
-                      (pstore/insert pstore tenant path)
-                      (catch Exception e
-                        (wlog/error "Path store error: " e))))
+                    (pstore/insert pstore tenant path))
                   (swap! path-stored? (fn [_] true)))))))))))
 
 (defn- migrate-file
