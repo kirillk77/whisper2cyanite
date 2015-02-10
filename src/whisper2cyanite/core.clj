@@ -15,56 +15,67 @@
 
 (def ^:const pbar-width 35)
 
+(defn- calc-ttl
+  "Calc TTL."
+  [time retention]
+  (- time (- (utils/now) retention)))
+
+(defn- migrate-points
+  "Migrate points."
+  [mstore options tenant rollup period retention path series]
+  (let [min-ttl (:min-ttl options default-min-ttl)
+        run (:run options false)]
+    (doseq [point series]
+      (let [time (first point)
+            value (last point)
+            ttl (calc-ttl time retention)]
+        (when (not= time 0)
+          (when (> ttl min-ttl)
+            (log/trace
+             (format (str "Migrating point: rollup: %s, period: %s, "
+                          "path: %s, time: %s, value: %s, ttl: %s")
+                     rollup period path time value ttl))
+            (when (and run mstore)
+              (mstore/insert mstore tenant rollup period path time value
+                             ttl))))))))
+
 (defn- process-archive
   "Process an archive."
-  [ra-file file archive mstore pstore tenant path from to retention options]
+  [ra-file file archive mstore tenant path from to retention options points-fn]
   (let [rollup (:seconds-per-point archive)
         points (:points archive)
         period (if retention (/ retention rollup) points)
         retention (if retention retention (* rollup points))
         data (whisper/fetch-archive-seq-ra ra-file file archive from to)
-        series (:series data)
-        path-stored? (atom false)
-        run (:run options false)
-        min-ttl (:min-ttl options default-min-ttl)]
-    (doseq [point series]
-      (let [time (first point)
-            value (last point)]
-        (when (not= time 0)
-          (let [ttl (- time (- (utils/now) retention))]
-            (when (> ttl min-ttl)
-              (log/trace
-               (format (str "Processing point: rollup: %s, period: %s, "
-                            "path: %s, time: %s, value: %s, ttl: %s")
-                       rollup period path time value ttl))
-              (when run
-                (when mstore
-                  (mstore/insert mstore tenant rollup period path time
-                                 value ttl))
-                (when-not @path-stored?
-                  (when pstore
-                    (pstore/insert pstore tenant path))
-                  (swap! path-stored? (fn [_] true)))))))))))
+        series (:series data)]
+    (points-fn mstore options tenant rollup period retention path series)))
+
+(defn- migrate-path
+  "Migrate a path."
+  [pstore tenant path]
+  (when pstore
+    (pstore/insert pstore tenant path)))
 
 (defn- process-file
   "Process a file."
-  [file dir mstore pstore tenant from to options]
-  (let [path (whisper/file-to-name file dir)
-        ra-file (RandomAccessFile. file "r")
-        rollups (:rollups options)]
-    (try
-      (let [info (whisper/read-info-ra ra-file file)
-            archives (:archives info)]
-        (doseq [archive archives]
-          (let [seconds-per-point (:seconds-per-point archive)]
-            (when (or (not (> (count rollups) 0))
-                      (contains? rollups seconds-per-point))
-              (let [retention (get rollups seconds-per-point
-                                   (:retention archive))]
-                (process-archive ra-file file archive mstore pstore tenant path
-                                 from to retention options))))))
-      (finally
-        (.close ra-file)))))
+  [file dir mstore pstore tenant from to options path-fn points-fn]
+  (let [path (whisper/file-to-name file dir)]
+    (path-fn pstore tenant path)
+    (let [ra-file (RandomAccessFile. file "r")
+          rollups (:rollups options)]
+      (try
+        (let [info (whisper/read-info-ra ra-file file)
+              archives (:archives info)]
+          (doseq [archive archives]
+            (let [seconds-per-point (:seconds-per-point archive)]
+              (when (or (not (> (count rollups) 0))
+                        (contains? rollups seconds-per-point))
+                (let [retention (get rollups seconds-per-point
+                                     (:retention archive))]
+                  (process-archive ra-file file archive mstore tenant path
+                                   from to retention options points-fn))))))
+        (finally
+          (.close ra-file))))))
 
 (defn- get-paths
   "Get paths."
@@ -129,7 +140,7 @@
 
 (defn- process
   "Process a Whisper database."
-  [source tenant cass-host es-url options start-title title]
+  [source tenant cass-host es-url options path-fn points-fn start-title title]
   (wlog/set-logging! options)
   (try
     (wlog/info start-title)
@@ -141,12 +152,12 @@
           pool (cp/threadpool jobs)
           mstore (create-mstore cass-host options)
           pstore (create-pstore es-url options)
-          process-fn (fn [file]
-                       (wlog/info "Processing path: " file)
-                       (when-not @wlog/print-log?
-                         (prog/tick))
-                       (process-file file root-dir mstore pstore tenant from to
-                                     options))]
+          process-file-fn (fn [file]
+                            (wlog/info "Processing path: " file)
+                            (when-not @wlog/print-log?
+                              (prog/tick))
+                            (process-file file root-dir mstore pstore tenant
+                                          from to options path-fn points-fn))]
       (try
         (prog/set-progress-bar!
          "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
@@ -156,7 +167,7 @@
         (when-not @wlog/print-log?
           (println title)
           (prog/init files-count))
-        (dorun (cp/pmap pool process-fn files))
+        (dorun (cp/pmap pool process-file-fn files))
         (when-not @wlog/print-log?
           (prog/done))
         (catch Exception e
@@ -173,8 +184,8 @@
 (defn migrate
   "Do migration."
   [source tenant cass-host es-url options]
-  (process source tenant cass-host es-url options "Starting migration"
-           "Migrating"))
+  (process source tenant cass-host es-url options migrate-path migrate-points
+           "Starting migration" "Migrating"))
 
 (defn list-paths
   "List paths."
