@@ -29,7 +29,7 @@
   (->> ["Whisper to Cyanite data migration tool"
         ""
         "Usage: "
-        "  whisper2cyanite [options] migrate <directory | file> <tenant> <cassandra-host> <elasticsearch-url>"
+        "  whisper2cyanite [options] migrate <directory | file> <tenant> <cassandra-host,...> <elasticsearch-url>"
         "  whisper2cyanite list <directory>"
         "  whisper2cyanite info <file>"
         "  whisper2cyanite [options] fetch <file> <rollup>"
@@ -80,13 +80,13 @@
                            :disable-progress} options)
   (let [source (nth arguments 0)
         tenant (nth arguments 1)
-        cass-host (nth arguments 2)
+        cass-hosts (str/split (nth arguments 2) #",")
         es-url (nth arguments 3)
         rollups (->> (:rollups options [])
                      (filter #(not (nil? %)))
                      (flatten)
                      (apply hash-map))]
-    (core/migrate source tenant cass-host es-url
+    (core/migrate source tenant cass-hosts es-url
                   (assoc options :rollups rollups))))
 
 (defn- run-list

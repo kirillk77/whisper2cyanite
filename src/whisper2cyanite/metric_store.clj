@@ -3,6 +3,7 @@
             [qbits.alia.policy.load-balancing :as alia_lbp]
             [clojure.core.async :as async]
             [clojure.tools.logging :as log]
+            [clojure.string :as str]
             [whisper2cyanite.utils :as utils]
             [whisper2cyanite.logging :as wlog])
   (:import [com.datastax.driver.core
@@ -58,10 +59,10 @@
 
 (defn cassandra-metric-store
   "Cassandra metric store."
-  [host options]
+  [hosts options]
   (log/info "Creating the metric store...")
   (let [keyspace (:cassandra-keyspace options default-cassandra-keyspace)
-        session (-> (alia/cluster {:contact-points host})
+        session (-> (alia/cluster {:contact-points hosts})
                     (alia/connect keyspace))
         insert! (get-cassandra-query session)
         chan_size (:cassandra-channel-size options default-cassandra-channel-size)
@@ -69,7 +70,7 @@
         data-stored? (atom false)
         channel (get-channel session insert! chan_size batch_size data-stored?)]
     (log/info (str "The metric store has been created. "
-                   "Host: " host ", "
+                   "Hosts: " (str/join "," hosts) ", "
                    "keyspace: " keyspace ", "
                    "channel size: " chan_size ", "
                    "batch size: " batch_size))
