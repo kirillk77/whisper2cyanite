@@ -30,7 +30,7 @@
     (doseq [point series]
       (let [time (first point)
             value (last point)]
-        (when-not (= time 0)
+        (when (not= time 0)
           (let [ttl (- time (- (utils/now) retention))]
             (when (> ttl min-ttl)
               (log/trace
@@ -121,9 +121,9 @@
 (defn- get-from-to
   "Get and check FROM and TO time."
   [options]
-  (let [from (:from options 0)
-        to (:to options utils/epoch-future)]
-    (when (>= from to)
+  (let [from (:from options)
+        to (:to options)]
+    (when (and from to (> from to))
       (throw (Exception. (str "Invalid TO value: " to))))
     {:from from :to to}))
 
@@ -218,8 +218,10 @@
             archive (get-archive-by-rollup archives rollup)]
         (when-not archive
           (throw (Exception. (str "Unknown rollup: " rollup))))
-        (let [series (:series (whisper/fetch-archive-seq-ra ra-file file archive
-                                                            from to))]
+        (let [series (-> (whisper/fetch-archive-seq-ra ra-file file archive
+                                                       from to)
+                         (:series)
+                         (whisper/sort-series))]
           (doseq [point series]
             (let [time (first point)
                   value (last point)]

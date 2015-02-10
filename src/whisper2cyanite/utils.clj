@@ -2,8 +2,6 @@
   (:require [clojure.core.async :refer [chan timeout go alts! >! close!]]
             [clojure.java.io :as io]))
 
-(def ^:const epoch-future 2085436800)
-
 (defn now
   "Get now as a Unix epoch."
   []
