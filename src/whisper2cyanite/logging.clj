@@ -36,7 +36,10 @@
   (log/info "Shutting down agents...")
   (shutdown-agents)
   (log/info "Agents have been down")
-  (info-always (format "Exiting with code %s..." ret-code))
+  (let [exit-msg (format "Exiting with code %s..." ret-code)]
+    (log/info exit-msg)
+    (when (not= ret-code 0)
+      (println exit-msg)))
   (System/exit ret-code))
 
 (defn info

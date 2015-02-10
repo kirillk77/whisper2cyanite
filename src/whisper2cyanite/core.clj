@@ -68,8 +68,10 @@
 
 (defn- get-paths
   "Get paths."
-  [dir]
-  (let [paths (whisper/get-paths dir)]
+  [source]
+  (let [paths (if (.isDirectory (io/file source))
+                (whisper/get-paths source)
+                [source])]
     (newline)
     (wlog/info "Getting paths...")
     (when-not @wlog/print-log?
@@ -86,11 +88,11 @@
 (defn- get-root-dir
   "Get root directory."
   [dir options]
-  (let [dir (.getCanonicalPath (io/file dir))
+  (let [dir (utils/get-cpath dir)
         root-dir (:root-dir options nil)]
     (if-not root-dir
       dir
-      (let [root-dir-c (.getCanonicalPath (io/file root-dir))]
+      (let [root-dir-c (utils/get-cpath root-dir)]
         (when (or (> (count root-dir-c) (count dir))
                   (not= (subs dir 0 (count root-dir-c)) root-dir-c))
           (throw (Exception. (str "Invalid root directory: " root-dir))))
@@ -127,12 +129,12 @@
 
 (defn- process
   "Process a Whisper database."
-  [dir tenant cass-host es-url options start-title title]
+  [source tenant cass-host es-url options start-title title]
   (wlog/set-logging! options)
   (try
     (wlog/info start-title)
-    (let [root-dir (get-root-dir dir options)
-          files (get-paths dir)
+    (let [root-dir (get-root-dir source options)
+          files (get-paths source)
           files-count (count files)
           {:keys [from to]} (get-from-to options)
           jobs (:jobs options default-jobs)
@@ -170,8 +172,8 @@
 
 (defn migrate
   "Do migration."
-  [dir tenant cass-host es-url options]
-  (process dir tenant cass-host es-url options "Starting migration"
+  [source tenant cass-host es-url options]
+  (process source tenant cass-host es-url options "Starting migration"
            "Migrating"))
 
 (defn list-paths

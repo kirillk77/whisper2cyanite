@@ -1,5 +1,6 @@
 (ns whisper2cyanite.utils
-  (:require [clojure.core.async :refer [chan timeout go alts! >! close!]]))
+  (:require [clojure.core.async :refer [chan timeout go alts! >! close!]]
+            [clojure.java.io :as io]))
 
 (def ^:const epoch-future 2085436800)
 
@@ -46,3 +47,8 @@
                         (>! out (vec narray))))
                     (close! out)))))))
     out))
+
+(defn get-cpath
+  "Get canonical path."
+  [path]
+  (.getCanonicalPath (io/file path)))
