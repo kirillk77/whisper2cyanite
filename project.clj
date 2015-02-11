@@ -1,4 +1,4 @@
-(defproject whisper2cyanite "0.2.0"
+(defproject whisper2cyanite "0.3.0"
   :description "Whisper to Cyanite data migration tool."
   :url "https://github.com/cybem/whisper2cyanite"
   :license {:name "MIT License"
