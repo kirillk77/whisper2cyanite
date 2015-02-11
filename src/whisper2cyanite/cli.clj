@@ -73,11 +73,12 @@
   [command arguments options summary]
   (check-arguments "migrate" arguments 4 4)
   (check-options command #{:from :to :run :rollups :jobs :min-ttl :root-dir
-                           :cassandra-keyspace :cassandra-channel-size
-                           :cassandra-batch-size :disable-metric-store
-                           :elasticsearch-index :disable-path-store :log-file
-                           :log-level :disable-log :stop-on-error
-                           :disable-progress} options)
+                           :cassandra-keyspace :cassandra-options
+                           :cassandra-channel-size :cassandra-batch-size
+                           :disable-metric-store :elasticsearch-index
+                           :disable-path-store :log-file :log-level
+                           :disable-log :stop-on-error :disable-progress}
+                 options)
   (let [source (nth arguments 0)
         tenant (nth arguments 1)
         cass-hosts (str/split (nth arguments 2) #",")
@@ -137,6 +138,10 @@
    ["-D" "--root-dir DIRECTORY" "Root directory"]
    [nil "--cassandra-keyspace KEYSPACE"
     (str "Cassandra keyspace. Default: " mstore/default-cassandra-keyspace)]
+   [nil "--cassandra-options OPTIONS"
+    "Cassandra options. Example: \"{:compression :lz4}\""
+    :parse-fn #(read-string %)
+    :validate [#(= clojure.lang.PersistentArrayMap (type %))]]
    [nil "--cassandra-channel-size SIZE"
     (str "Cassandra channel size. Default: "
          mstore/default-cassandra-channel-size)

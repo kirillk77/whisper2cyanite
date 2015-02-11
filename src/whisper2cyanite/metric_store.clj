@@ -17,6 +17,7 @@
 (def ^:const default-cassandra-keyspace "metric")
 (def ^:const default-cassandra-channel-size 10000)
 (def ^:const default-cassandra-batch-size 500)
+(def ^:const default-cassandra-options {})
 
 (def cassandra-cql
   (str
@@ -62,7 +63,11 @@
   [hosts options]
   (log/info "Creating the metric store...")
   (let [keyspace (:cassandra-keyspace options default-cassandra-keyspace)
-        session (-> (alia/cluster {:contact-points hosts})
+        c-options (merge {:contact-points hosts}
+                         default-cassandra-options
+                         (:cassandra-options options {}))
+        _ (log/info "Cassandra options: " c-options)
+        session (-> (alia/cluster c-options)
                     (alia/connect keyspace))
         insert! (get-cassandra-query session)
         chan_size (:cassandra-channel-size options default-cassandra-channel-size)
@@ -70,8 +75,7 @@
         data-stored? (atom false)
         channel (get-channel session insert! chan_size batch_size data-stored?)]
     (log/info (str "The metric store has been created. "
-                   "Hosts: " (str/join "," hosts) ", "
-                   "keyspace: " keyspace ", "
+                   "Keyspace: " keyspace ", "
                    "channel size: " chan_size ", "
                    "batch size: " batch_size))
     (reify
