@@ -6,6 +6,11 @@
             [clojure.tools.logging :as log]
             [whisper2cyanite.logging :as wlog]))
 
+(defprotocol PathStore
+  (insert [this tenant path])
+  (exist? [this tenant path])
+  (shutdown [this]))
+
 (def ^:const default-es-index "cyanite_paths")
 (def ^:const es-def-type "path")
 
@@ -15,7 +20,7 @@
                 :properties {:tenant {:type "string" :index "not_analyzed"}
                              :path {:type "string" :index "not_analyzed"}}}})
 
-(defn get-all-paths
+(defn- get-all-paths
   "Get all paths."
   [tenant path]
   (let [parts (str/split path #"\.")
@@ -27,10 +32,10 @@
             :leaf (= depth parts-count)})
          (range 1 (inc parts-count)))))
 
-(defprotocol PathStore
-  (insert [this tenant path])
-  (exist? [this path])
-  (shutdown [this]))
+(defn- constuct-id
+  "Construct ID."
+  [path tenant]
+  (str path "_" tenant))
 
 (defn elasticsearch-metric-store
   "Elasticsearch path store."
@@ -51,14 +56,15 @@
       PathStore
       (insert [this tenant path]
         (try
-          (dorun (map #(when-not (exists-fn (:path %))
-                         (update-fn (:path %) %))
+          (dorun (map #(let [id (constuct-id (:tenant %) (:path %))]
+                         (when-not (exists-fn id)
+                           (update-fn id %)))
                       (get-all-paths tenant path)))
           (catch Exception e
             (wlog/error "Path store error: " e))))
-      (exist? [this path]
+      (exist? [this tenant path]
         (try
-          (exists-fn path)
+          (exists-fn (constuct-id tenant path))
           (catch Exception e
             (wlog/error "Path store error: " e))))
       (shutdown [this]
