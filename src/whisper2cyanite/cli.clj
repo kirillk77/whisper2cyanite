@@ -76,7 +76,7 @@
                            :cassandra-keyspace :cassandra-channel-size
                            :cassandra-batch-size :disable-metric-store
                            :elasticsearch-index :disable-path-store :log-file
-                           :log-level :disable-log :ignore-errors
+                           :log-level :disable-log :stop-on-error
                            :disable-progress} options)
   (let [source (nth arguments 0)
         tenant (nth arguments 1)
@@ -157,7 +157,7 @@
          "Default: " wlog/default-log-level)
     :validate [#(or (= (count %) 0)
                     (not= (get logconfig/levels % :not-found) :not-found))]]
-   ["-I" "--ignore-errors" "Ignore non-fatal errors"]
+   ["-S" "--stop-on-error" "Stop on first non-fatal error"]
    ["-P" "--disable-progress" "Disable progress bar"]])
 
 (defn- run-command

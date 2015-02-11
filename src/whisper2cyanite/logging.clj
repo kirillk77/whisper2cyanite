@@ -9,7 +9,7 @@
 
 (def print-log? (atom false))
 (def disable-log? (atom false))
-(def ignore-errors? (atom false))
+(def stop-on-error? (atom false))
 
 (def total-errors (atom 0))
 
@@ -18,7 +18,7 @@
   [options]
   (swap! print-log? (fn [_] (:disable-progress options @print-log?)))
   (swap! disable-log? (fn [_] (:disable-log options @disable-log?)))
-  (swap! ignore-errors? (fn [_] (:ignore-errors options @ignore-errors?)))
+  (swap! stop-on-error? (fn [_] (:stop-on-error options @stop-on-error?)))
   (logconfig/start-logging!
    {:level (:log-level options default-log-level)
     :files [(:log-file options default-log-file)]}))
@@ -62,12 +62,12 @@
   "Log error."
   [& args]
   (let [args-str (str/join "" args)]
-    (when (and (not @print-log?) (not @ignore-errors?))
+    (when (and (not @print-log?) @stop-on-error?)
       (newline))
-    (when (or @print-log? (not @ignore-errors?))
+    (when (or @print-log? @stop-on-error?)
       (println args-str))
     (log/error args-str))
-  (when-not @ignore-errors?
+  (when @stop-on-error?
     (exit 1)))
 
 (defn fatal
