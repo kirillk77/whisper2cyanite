@@ -69,6 +69,21 @@
                [(format "Option \"--%s\" conflicts with the command \"%s\""
                         (name option) command)])))))
 
+(defn- prepare-common-args
+  "Prepare common arguments."
+  [arguments options]
+  (let [source (nth arguments 0)
+        tenant (nth arguments 1)
+        cass-hosts (str/split (nth arguments 2) #",")
+        es-url (nth arguments 3)
+        rollups (->> (:rollups options [])
+                     (filter #(not (nil? %)))
+                     (flatten)
+                     (apply hash-map))
+        options (assoc options :rollups rollups)]
+    {:source source :tenant tenant :cass-hosts cass-hosts :es-url es-url
+     :options options}))
+
 (defn- run-migrate
   "Run command 'migrate'."
   [command arguments options summary]
@@ -80,16 +95,9 @@
                            :disable-path-store :log-file :log-level
                            :disable-log :stop-on-error :disable-progress}
                  options)
-  (let [source (nth arguments 0)
-        tenant (nth arguments 1)
-        cass-hosts (str/split (nth arguments 2) #",")
-        es-url (nth arguments 3)
-        rollups (->> (:rollups options [])
-                     (filter #(not (nil? %)))
-                     (flatten)
-                     (apply hash-map))]
-    (core/migrate source tenant cass-hosts es-url
-                  (assoc options :rollups rollups))))
+  (let [{:keys [source tenant cass-hosts es-url
+                options]} (prepare-common-args arguments options)]
+    (core/migrate source tenant cass-hosts es-url options)))
 
 (defn- run-validate
   "Run command 'validate'."
@@ -101,16 +109,9 @@
                            :disable-path-store :log-file :log-level
                            :disable-log :stop-on-error :disable-progress}
                  options)
-  (let [source (nth arguments 0)
-        tenant (nth arguments 1)
-        cass-hosts (str/split (nth arguments 2) #",")
-        es-url (nth arguments 3)
-        rollups (->> (:rollups options [])
-                     (filter #(not (nil? %)))
-                     (flatten)
-                     (apply hash-map))]
-    (core/validate source tenant cass-hosts es-url
-                   (assoc options :rollups rollups))))
+  (let [{:keys [source tenant cass-hosts es-url
+                options]} (prepare-common-args arguments options)]
+    (core/validate source tenant cass-hosts es-url options)))
 
 (defn- run-list
   "Run command 'list'."
