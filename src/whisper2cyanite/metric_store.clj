@@ -45,9 +45,9 @@
 
 (defn- get-channel
   "Get store channel."
-  [session statement chan_size batch_size data-stored?]
-  (let [ch (async/chan chan_size)
-        ch-p (utils/partition-or-time batch_size ch batch_size 5)]
+  [session statement chan-size batch-size data-stored?]
+  (let [ch (async/chan chan-size)
+        ch-p (utils/partition-or-time batch-size ch batch-size 5)]
     (utils/go-while (not @data-stored?)
                     (let [values (async/<! ch-p)]
                       (if values
@@ -76,14 +76,14 @@
         session (-> (alia/cluster c-options)
                     (alia/connect keyspace))
         insert! (get-cassandra-insert session)
-        chan_size (:cassandra-channel-size options default-cassandra-channel-size)
-        batch_size (:cassandra-batch-size options default-cassandra-batch-size)
+        chan-size (:cassandra-channel-size options default-cassandra-channel-size)
+        batch-size (:cassandra-batch-size options default-cassandra-batch-size)
         data-stored? (atom false)
-        channel (get-channel session insert! chan_size batch_size data-stored?)]
+        channel (get-channel session insert! chan-size batch-size data-stored?)]
     (log/info (str "The metric store has been created. "
                    "Keyspace: " keyspace ", "
-                   "channel size: " chan_size ", "
-                   "batch size: " batch_size))
+                   "channel size: " chan-size ", "
+                   "batch size: " batch-size))
     (reify
       MetricStore
       (insert [this tenant rollup period path time value ttl]
