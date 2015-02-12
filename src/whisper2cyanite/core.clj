@@ -20,6 +20,12 @@
   [time retention]
   (- time (- (utils/now) retention)))
 
+(defn- log-point
+  [msg rollup period path time value ttl]
+  (log/trace
+   (format (str "%s: rollup: %s, period: %s, path: %s, time: %s, "
+                "value: %s, ttl: %s") msg rollup period path time value ttl)))
+
 (defn- migrate-points
   "Migrate points."
   [mstore options tenant rollup period retention path series]
@@ -30,10 +36,7 @@
             value (last point)
             ttl (calc-ttl time retention)]
         (when (> ttl min-ttl)
-          (log/trace
-           (format (str "Migrating point: rollup: %s, period: %s, "
-                        "path: %s, time: %s, value: %s, ttl: %s")
-                   rollup period path time value ttl))
+          (log-point "Migrating point" rollup period path time value ttl)
           (when (and run mstore)
             (mstore/insert mstore tenant rollup period path time value
                            ttl)))))))
@@ -75,10 +78,7 @@
               w-value (last point)
               ttl (calc-ttl time retention)]
           (when (> ttl min-ttl)
-            (log/trace
-             (format (str "Validating point: rollup: %s, period: %s, "
-                          "path: %s, time: %s, value: %s, ttl: %s")
-                     rollup period path time w-value ttl))
+            (log-point "Validating point" rollup period path time w-value ttl)
             (let [s-value (get mstore-series time)]
               (every? #(validate-value rollup period path time w-value s-value
                                        (first %) (second %) error-reported?)
