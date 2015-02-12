@@ -11,8 +11,6 @@
 (def disable-log? (atom false))
 (def stop-on-error? (atom false))
 
-(def total-errors (atom 0))
-
 (defn set-logging!
   "Set options."
   [options]

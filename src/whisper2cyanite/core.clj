@@ -29,15 +29,60 @@
       (let [time (first point)
             value (last point)
             ttl (calc-ttl time retention)]
-        (when (not= time 0)
+        (when (> ttl min-ttl)
+          (log/trace
+           (format (str "Migrating point: rollup: %s, period: %s, "
+                        "path: %s, time: %s, value: %s, ttl: %s")
+                   rollup period path time value ttl))
+          (when (and run mstore)
+            (mstore/insert mstore tenant rollup period path time value
+                           ttl)))))))
+
+(defn- validate-value
+  "Validate a value."
+  [rollup period path time w-value s-value validate-fn msg error-reported?]
+  (let [valid? (validate-fn w-value s-value)
+        err (format
+             (str "Metric store validation. "
+                  "%s: rollup: %s, period: %s, path: %s, time: %s, "
+                  "whisper value: %s, store value %s")
+             msg rollup period path time w-value s-value)]
+    (when-not valid?
+      (if-not @error-reported?
+        (do
+          (wlog/error err)
+          (swap! error-reported? (fn [_] true)))
+        (log/debug err)))
+    valid?))
+
+(defn- validate-points
+  "Validate points."
+  [mstore options tenant rollup period retention path series]
+  (when mstore
+    (let [series (whisper/sort-series series)
+          from (first (first series))
+          to (first (last series))
+          min-ttl (:min-ttl options default-min-ttl)
+          mstore-series (mstore/fetch-series mstore tenant rollup period path
+                                             from to)
+          error-reported? (atom false)
+          validators [[#(not= %2 nil) "Point not found"]
+                      [#(sequential? %2) "Value is not an array"]
+                      [#(= (count %2) 1) "Array size is not equal to 1"]
+                      [#(= %1 (first %2)) "Values are not equal"]]]
+      (doseq [point series]
+        (let [time (first point)
+              w-value (last point)
+              ttl (calc-ttl time retention)]
           (when (> ttl min-ttl)
             (log/trace
-             (format (str "Migrating point: rollup: %s, period: %s, "
+             (format (str "Validating point: rollup: %s, period: %s, "
                           "path: %s, time: %s, value: %s, ttl: %s")
-                     rollup period path time value ttl))
-            (when (and run mstore)
-              (mstore/insert mstore tenant rollup period path time value
-                             ttl))))))))
+                     rollup period path time w-value ttl))
+            (let [s-value (get mstore-series time)]
+              (every? #(validate-value rollup period path time w-value s-value
+                                       (first %) (second %) error-reported?)
+                      validators))))))))
 
 (defn- process-archive
   "Process an archive."
@@ -47,8 +92,9 @@
         period (if retention (/ retention rollup) points)
         retention (if retention retention (* rollup points))
         data (whisper/fetch-archive-seq-ra ra-file file archive from to)
-        series (:series data)]
-    (points-fn mstore options tenant rollup period retention path series)))
+        series (whisper/remove-nulls (:series data))]
+    (when points-fn
+      (points-fn mstore options tenant rollup period retention path series))))
 
 (defn- migrate-path
   "Migrate a path."
@@ -56,11 +102,19 @@
   (when pstore
     (pstore/insert pstore tenant path)))
 
+(defn- validate-path
+  "Validate a path."
+  [pstore tenant path]
+  (when pstore
+    (when-not (pstore/exist? pstore tenant path)
+      (wlog/error "Path not found in the path store: " path))))
+
 (defn- process-file
   "Process a file."
   [file dir mstore pstore tenant from to options path-fn points-fn]
   (let [path (whisper/file-to-name file dir)]
-    (path-fn pstore tenant path)
+    (when path-fn
+      (path-fn pstore tenant path))
     (let [ra-file (RandomAccessFile. file "r")
           rollups (:rollups options)]
       (try
@@ -186,6 +240,12 @@
   [source tenant cass-host es-url options]
   (process source tenant cass-host es-url options migrate-path migrate-points
            "Starting migration" "Migrating"))
+
+(defn validate
+  "Do validation."
+  [source tenant cass-host es-url options]
+  (process source tenant cass-host es-url options validate-path validate-points
+           "Starting validation" "Validating"))
 
 (defn list-paths
   "List paths."

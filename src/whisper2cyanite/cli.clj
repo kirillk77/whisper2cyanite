@@ -8,7 +8,7 @@
             [whisper2cyanite.path-store :as pstore])
   (:gen-class))
 
-(def cli-commands #{"migrate" "list" "info" "fetch" "help"})
+(def cli-commands #{"migrate" "validate" "list" "info" "fetch" "help"})
 
 (defn- check-rollups
   "Check rollups."
@@ -30,6 +30,7 @@
         ""
         "Usage: "
         "  whisper2cyanite [options] migrate <directory | file> <tenant> <cassandra-host,...> <elasticsearch-url>"
+        "  whisper2cyanite [options] validate <directory | file> <tenant> <cassandra-host,...> <elasticsearch-url>"
         "  whisper2cyanite list <directory>"
         "  whisper2cyanite info <file>"
         "  whisper2cyanite [options] fetch <file> <rollup>"
@@ -90,6 +91,27 @@
     (core/migrate source tenant cass-hosts es-url
                   (assoc options :rollups rollups))))
 
+(defn- run-validate
+  "Run command 'validate'."
+  [command arguments options summary]
+  (check-arguments "validate" arguments 4 4)
+  (check-options command #{:from :to :rollups :jobs :min-ttl :root-dir
+                           :cassandra-keyspace :cassandra-options
+                           :disable-metric-store :elasticsearch-index
+                           :disable-path-store :log-file :log-level
+                           :disable-log :stop-on-error :disable-progress}
+                 options)
+  (let [source (nth arguments 0)
+        tenant (nth arguments 1)
+        cass-hosts (str/split (nth arguments 2) #",")
+        es-url (nth arguments 3)
+        rollups (->> (:rollups options [])
+                     (filter #(not (nil? %)))
+                     (flatten)
+                     (apply hash-map))]
+    (core/validate source tenant cass-hosts es-url
+                   (assoc options :rollups rollups))))
+
 (defn- run-list
   "Run command 'list'."
   [command arguments options summary]
@@ -138,7 +160,7 @@
    ["-D" "--root-dir DIRECTORY" "Root directory"]
    [nil "--cassandra-keyspace KEYSPACE"
     (str "Cassandra keyspace. Default: " mstore/default-cassandra-keyspace)]
-   [nil "--cassandra-options OPTIONS"
+   ["-O" "--cassandra-options OPTIONS"
     "Cassandra options. Example: \"{:compression :lz4}\""
     :parse-fn #(read-string %)
     :validate [#(= clojure.lang.PersistentArrayMap (type %))]]
