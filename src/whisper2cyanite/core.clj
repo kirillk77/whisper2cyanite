@@ -38,7 +38,7 @@
             ttl (calc-ttl time retention)]
         (when (> ttl min-ttl)
           (log-point "Migrating point" rollup period path time value ttl)
-          (when (and run mstore)
+          (when run
             (mstore/insert mstore tenant rollup period path time value
                            ttl)))))))
 
@@ -62,28 +62,27 @@
 (defn- validate-points
   "Validate points."
   [mstore options tenant rollup period retention path series]
-  (when mstore
-    (let [series (whisper/sort-series series)
-          from (first (first series))
-          to (first (last series))
-          min-ttl (:min-ttl options default-min-ttl)
-          mstore-series (mstore/fetch-series mstore tenant rollup period path
-                                             from to)
-          error-reported? (atom false)
-          validators [[#(not= %2 nil) "Point not found"]
-                      [#(sequential? %2) "Value is not an array"]
-                      [#(= (count %2) 1) "Array size is not equal to 1"]
-                      [#(= %1 (first %2)) "Values are not equal"]]]
-      (doseq [point series]
-        (let [time (first point)
-              w-value (last point)
-              ttl (calc-ttl time retention)]
-          (when (> ttl min-ttl)
-            (log-point "Validating point" rollup period path time w-value ttl)
-            (let [s-value (get mstore-series time)]
-              (every? #(validate-value rollup period path time w-value s-value
-                                       (first %) (second %) error-reported?)
-                      validators))))))))
+  (let [series (whisper/sort-series series)
+        from (first (first series))
+        to (first (last series))
+        min-ttl (:min-ttl options default-min-ttl)
+        mstore-series (mstore/fetch-series mstore tenant rollup period path
+                                           from to)
+        error-reported? (atom false)
+        validators [[#(not= %2 nil) "Point not found"]
+                    [#(sequential? %2) "Value is not an array"]
+                    [#(= (count %2) 1) "Array size is not equal to 1"]
+                    [#(= %1 (first %2)) "Values are not equal"]]]
+    (doseq [point series]
+      (let [time (first point)
+            w-value (last point)
+            ttl (calc-ttl time retention)]
+        (when (> ttl min-ttl)
+          (log-point "Validating point" rollup period path time w-value ttl)
+          (let [s-value (get mstore-series time)]
+            (every? #(validate-value rollup period path time w-value s-value
+                                     (first %) (second %) error-reported?)
+                    validators)))))))
 
 (defn- process-archive
   "Process an archive."
@@ -116,21 +115,22 @@
   (let [path (whisper/file-to-name file dir)]
     (when path-fn
       (path-fn pstore tenant path))
-    (let [ra-file (RandomAccessFile. file "r")
-          rollups (:rollups options)]
-      (try
-        (let [info (whisper/read-info-ra ra-file file)
-              archives (:archives info)]
-          (doseq [archive archives]
-            (let [seconds-per-point (:seconds-per-point archive)]
-              (when (or (not (> (count rollups) 0))
-                        (contains? rollups seconds-per-point))
-                (let [retention (get rollups seconds-per-point
-                                     (:retention archive))]
-                  (process-archive ra-file file archive mstore tenant path
-                                   from to retention options points-fn))))))
-        (finally
-          (.close ra-file))))))
+    (when mstore
+      (let [ra-file (RandomAccessFile. file "r")
+            rollups (:rollups options)]
+        (try
+          (let [info (whisper/read-info-ra ra-file file)
+                archives (:archives info)]
+            (doseq [archive archives]
+              (let [seconds-per-point (:seconds-per-point archive)]
+                (when (or (not (> (count rollups) 0))
+                          (contains? rollups seconds-per-point))
+                  (let [retention (get rollups seconds-per-point
+                                       (:retention archive))]
+                    (process-archive ra-file file archive mstore tenant path
+                                     from to retention options points-fn))))))
+          (finally
+            (.close ra-file)))))))
 
 (defn- get-paths
   "Get paths."
