@@ -16,11 +16,12 @@
 (def ^:const pbar-width 35)
 
 (defn- calc-ttl
-  "Calc TTL."
+  "Calc a TTL value."
   [time retention]
   (- time (- (utils/now) retention)))
 
 (defn- log-point
+  "Log a point."
   [msg rollup period path time value ttl]
   (log/trace
    (format (str "%s: rollup: %s, period: %s, path: %s, time: %s, "
@@ -164,7 +165,7 @@
         root-dir-c))))
 
 (defn- create-mstore
-  "Create metric store."
+  "Create a metric store."
   [cass-host options]
   (if-not (:disable-metric-store options false)
     (try
@@ -174,7 +175,7 @@
     nil))
 
 (defn- create-pstore
-  "Create path store."
+  "Create a path store."
   [es-url options]
   (if-not (:disable-path-store options false)
     (try
@@ -184,7 +185,7 @@
     nil))
 
 (defn- get-from-to
-  "Get and check FROM and TO time."
+  "Get and check FROM and TO time values."
   [options]
   (let [from (:from options)
         to (:to options)]
@@ -236,13 +237,13 @@
   (wlog/exit 0))
 
 (defn migrate
-  "Do migration."
+  "Do the migration."
   [source tenant cass-host es-url options]
   (process source tenant cass-host es-url options migrate-path migrate-points
            "Starting migration" "Migrating"))
 
 (defn validate
-  "Do validation."
+  "Do the validation."
   [source tenant cass-host es-url options]
   (process source tenant cass-host es-url options validate-path validate-points
            "Starting validation" "Validating"))
@@ -271,7 +272,7 @@
       (println "    Size:             " (str (:size archive))))))
 
 (defn- get-archive-by-rollup
-  "Get archive by rollup."
+  "Get an archive by a rollup."
   [archives rollup]
   (let [archive (filter #(= rollup (:seconds-per-point %)) archives)]
     (if (count archive)
