@@ -83,7 +83,7 @@
         channel (get-channel session insert! chan-size data-stored?)]
     (log/info (str "The metric store has been created. "
                    "Keyspace: " keyspace ", "
-                   "channel size: " chan-size ", "))
+                   "channel size: " chan-size))
     (reify
       MetricStore
       (insert [this tenant rollup period path time value ttl]

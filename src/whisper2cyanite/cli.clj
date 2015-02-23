@@ -91,9 +91,9 @@
   (check-options command #{:from :to :run :rollups :jobs :min-ttl :root-dir
                            :cassandra-keyspace :cassandra-options
                            :cassandra-channel-size :disable-metric-store
-                           :elasticsearch-index :disable-path-store
-                           :log-file :log-level :disable-log :stop-on-error
-                           :disable-progress}
+                           :elasticsearch-index :elasticsearch-channel-size
+                           :disable-path-store :log-file :log-level
+                           :disable-log :stop-on-error :disable-progress}
                  options)
   (let [{:keys [source tenant cass-hosts es-url
                 options]} (prepare-common-args arguments options)]
@@ -173,6 +173,11 @@
    [nil "--disable-metric-store" "Disable writing to metric store"]
    [nil "--elasticsearch-index INDEX"
     (str "Elasticsearch index. Default: " pstore/default-es-index)]
+   [nil "--elasticsearch-channel-size SIZE"
+    (str "Elasticsearch channel size. Default: "
+         pstore/default-es-channel-size)
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 %)]]
    [nil "--disable-path-store" "Disable writing to path store"]
    ["-l" "--log-file FILE" (str "Log file. Default: " wlog/default-log-file)]
    ["-L" "--log-level LEVEL"

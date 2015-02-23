@@ -79,7 +79,8 @@
         channel (get-channel exists-fn update-fn chan-size data-stored?)]
     (log/info (str "The path store has been created. "
                    "URL: " url ", "
-                   "index: " index))
+                   "index: " index ", "
+                   "channel size: " chan-size))
     (when-not (esri/exists? conn index)
       (log/info "Creating the path index...")
       (esri/create conn index :mappings es-type-map)
