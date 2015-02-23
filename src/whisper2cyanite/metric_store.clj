@@ -35,9 +35,8 @@
 
 (defn- log-error
   "Log a error."
-  [error tenant rollup period path time]
+  [error rollup period path time]
   (wlog/error (str "Metric store error: " error ", "
-                   "tenant: " tenant ", "
                    "rollup " rollup ", "
                    "period: " period ", "
                    "path: " path ", "
@@ -58,10 +57,9 @@
                                                  :consistency :any})
                              (fn [rows-or-e]
                                (if (instance? Throwable rows-or-e)
-                                 (log-error rows-or-e tenant rollup period path
-                                            time))))
+                                 (log-error rows-or-e rollup period path time))))
                             (catch Exception e
-                              (log-error e tenant rollup period path time))))
+                              (log-error e rollup period path time))))
                         (when (not @data-stored?)
                           (swap! data-stored? (fn [_] true))))))
     ch))
@@ -92,7 +90,7 @@
                               (int rollup) (int period) (str path)
                               (long time)])
           (catch Exception e
-            (log-error e tenant rollup period path time))))
+            (log-error e rollup period path time))))
       (fetch-series [this tenant rollup period path from to]
         (try
           (let [series (atom {})]

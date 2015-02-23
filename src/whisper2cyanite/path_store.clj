@@ -42,9 +42,8 @@
 
 (defn- log-error
   "Log a error."
-  [error tenant path]
-  (wlog/error (format "Path store error: %s, tenant: %s, path: %s"
-                      error tenant path)))
+  [error path]
+  (wlog/error (format "Path store error: %s, path: %s" error path)))
 
 (defn- get-channel
   "Get store channel."
@@ -61,7 +60,7 @@
                                              (update-fn id %)))
                                         (get-all-paths tenant path)))
                             (catch Exception e
-                              (log-error e tenant path))))
+                              (log-error e path))))
                         (when (not @data-stored?)
                           (swap! data-stored? (fn [_] true))))))
     ch))
@@ -91,12 +90,12 @@
         (try
           (async/>!! channel [tenant path])
           (catch Exception e
-            (log-error e tenant path))))
+            (log-error e path))))
       (exist? [this tenant path]
         (try
           (exists-fn (constuct-id tenant path))
           (catch Exception e
-            (log-error e tenant path))))
+            (log-error e path))))
       (shutdown [this]
         (log/info "Shutting down the path store...")
         (async/close! channel)
