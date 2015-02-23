@@ -90,10 +90,10 @@
   (check-arguments "migrate" arguments 4 4)
   (check-options command #{:from :to :run :rollups :jobs :min-ttl :root-dir
                            :cassandra-keyspace :cassandra-options
-                           :cassandra-channel-size :cassandra-batch-size
-                           :disable-metric-store :elasticsearch-index
-                           :disable-path-store :log-file :log-level
-                           :disable-log :stop-on-error :disable-progress}
+                           :cassandra-channel-size :disable-metric-store
+                           :elasticsearch-index :disable-path-store
+                           :log-file :log-level :disable-log :stop-on-error
+                           :disable-progress}
                  options)
   (let [{:keys [source tenant cass-hosts es-url
                 options]} (prepare-common-args arguments options)]
@@ -168,11 +168,6 @@
    [nil "--cassandra-channel-size SIZE"
     (str "Cassandra channel size. Default: "
          mstore/default-cassandra-channel-size)
-    :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %)]]
-   [nil "--cassandra-batch-size SIZE"
-    (str "Cassandra batch size. Default: "
-         mstore/default-cassandra-batch-size)
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 %)]]
    [nil "--disable-metric-store" "Disable writing to metric store"]

@@ -7,7 +7,6 @@
             [whisper2cyanite.utils :as utils]
             [whisper2cyanite.logging :as wlog])
   (:import [com.datastax.driver.core
-            BatchStatement
             PreparedStatement]))
 
 (defprotocol MetricStore
@@ -17,7 +16,6 @@
 
 (def ^:const default-cassandra-keyspace "metric")
 (def ^:const default-cassandra-channel-size 10000)
-(def ^:const default-cassandra-batch-size 500)
 (def ^:const default-cassandra-options {})
 
 (def insert-cql
@@ -35,26 +33,17 @@
   [session]
   (alia/prepare session insert-cql))
 
-(defn- batch
-  "Creates a batch of prepared statements"
-  [^PreparedStatement s values]
-  (let [b (BatchStatement.)]
-    (doseq [v values]
-      (.add b (.bind s (into-array Object v))))
-    b))
-
 (defn- get-channel
   "Get store channel."
-  [session statement chan-size batch-size data-stored?]
-  (let [ch (async/chan chan-size)
-        ch-p (utils/partition-or-time batch-size ch batch-size 5)]
+  [session statement chan-size data-stored?]
+  (let [ch (async/chan chan-size)]
     (utils/go-while (not @data-stored?)
-                    (let [values (async/<! ch-p)]
+                    (let [values (async/<! ch)]
                       (if values
                         (try
                           (async/take!
-                           (alia/execute-chan session (batch statement values)
-                                              {:consistency :any})
+                           (alia/execute-chan session statement
+                                              {:values values :consistency :any})
                            (fn [rows-or-e]
                              (if (instance? Throwable rows-or-e)
                                (wlog/error "Metric store error: " rows-or-e))))
@@ -77,13 +66,11 @@
                     (alia/connect keyspace))
         insert! (get-cassandra-insert session)
         chan-size (:cassandra-channel-size options default-cassandra-channel-size)
-        batch-size (:cassandra-batch-size options default-cassandra-batch-size)
         data-stored? (atom false)
-        channel (get-channel session insert! chan-size batch-size data-stored?)]
+        channel (get-channel session insert! chan-size data-stored?)]
     (log/info (str "The metric store has been created. "
                    "Keyspace: " keyspace ", "
-                   "channel size: " chan-size ", "
-                   "batch size: " batch-size))
+                   "channel size: " chan-size ", "))
     (reify
       MetricStore
       (insert [this tenant rollup period path time value ttl]
