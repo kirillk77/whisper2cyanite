@@ -35,8 +35,8 @@
 
 (defn- log-error
   "Log a error."
-  [e tenant rollup period path time]
-  (wlog/error (str "Metric store error: " e ", "
+  [error tenant rollup period path time]
+  (wlog/error (str "Metric store error: " error ", "
                    "tenant: " tenant ", "
                    "rollup " rollup ", "
                    "period: " period ", "
@@ -48,13 +48,13 @@
   [session statement chan-size data-stored?]
   (let [ch (async/chan chan-size)]
     (utils/go-while (not @data-stored?)
-                    (let [values (async/<! ch)]
-                      (if values
-                        (let [[_ _ tenant rollup period path time] values]
+                    (let [value (async/<! ch)]
+                      (if value
+                        (let [[_ _ tenant rollup period path time] value]
                           (try
                             (async/take!
                              (alia/execute-chan session statement
-                                                {:values values
+                                                {:values value
                                                  :consistency :any})
                              (fn [rows-or-e]
                                (if (instance? Throwable rows-or-e)
