@@ -13,7 +13,7 @@
   (exist? [this tenant path])
   (shutdown [this]))
 
-(def ^:const default-es-channel-size 30000)
+(def ^:const default-es-channel-size 10000)
 (def ^:const default-es-index "cyanite_paths")
 (def ^:const es-def-type "path")
 
