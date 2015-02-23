@@ -33,6 +33,16 @@
   [session]
   (alia/prepare session insert-cql))
 
+(defn- log-error
+  "Log a error."
+  [e tenant rollup period path time]
+  (wlog/error (str "Metric store error: " e ", "
+                   "tenant: " tenant ", "
+                   "rollup " rollup ", "
+                   "period: " period ", "
+                   "path: " path ", "
+                   "time: " time)))
+
 (defn- get-channel
   "Get store channel."
   [session statement chan-size data-stored?]
@@ -40,15 +50,18 @@
     (utils/go-while (not @data-stored?)
                     (let [values (async/<! ch)]
                       (if values
-                        (try
-                          (async/take!
-                           (alia/execute-chan session statement
-                                              {:values values :consistency :any})
-                           (fn [rows-or-e]
-                             (if (instance? Throwable rows-or-e)
-                               (wlog/error "Metric store error: " rows-or-e))))
-                          (catch Exception e
-                            (wlog/error "Metric store error: " e)))
+                        (let [[_ _ tenant rollup period path time] values]
+                          (try
+                            (async/take!
+                             (alia/execute-chan session statement
+                                                {:values values
+                                                 :consistency :any})
+                             (fn [rows-or-e]
+                               (if (instance? Throwable rows-or-e)
+                                 (log-error rows-or-e tenant rollup period path
+                                            time))))
+                            (catch Exception e
+                              (log-error e tenant rollup period path time))))
                         (when (not @data-stored?)
                           (swap! data-stored? (fn [_] true))))))
     ch))
@@ -79,7 +92,7 @@
                               (int rollup) (int period) (str path)
                               (long time)])
           (catch Exception e
-            (wlog/error "Metric store error: " e))))
+            (log-error e tenant rollup period path time))))
       (fetch-series [this tenant rollup period path from to]
         (try
           (let [series (atom {})]
