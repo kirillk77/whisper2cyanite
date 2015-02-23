@@ -1,16 +1,19 @@
 (ns whisper2cyanite.path-store
-  (:require [clojure.string :as str]
-            [clojurewerkz.elastisch.rest :as esr]
+  (:require [clojurewerkz.elastisch.rest :as esr]
             [clojurewerkz.elastisch.rest.index :as esri]
             [clojurewerkz.elastisch.rest.document :as esrd]
+            [clojure.string :as str]
+            [clojure.core.async :as async]
             [clojure.tools.logging :as log]
-            [whisper2cyanite.logging :as wlog]))
+            [whisper2cyanite.logging :as wlog]
+            [whisper2cyanite.utils :as utils]))
 
 (defprotocol PathStore
   (insert [this tenant path])
   (exist? [this tenant path])
   (shutdown [this]))
 
+(def ^:const default-es-channel-size 30000)
 (def ^:const default-es-index "cyanite_paths")
 (def ^:const es-def-type "path")
 
@@ -37,6 +40,32 @@
   [path tenant]
   (str path "_" tenant))
 
+(defn- log-error
+  "Log a error."
+  [error tenant path]
+  (wlog/error (format "Path store error: %s, tenant: %s, path: %s"
+                      error tenant path)))
+
+(defn- get-channel
+  "Get store channel."
+  [exists-fn update-fn chan-size data-stored?]
+  (let [ch (async/chan chan-size )]
+    (utils/go-while (not @data-stored?)
+                    (let [value (async/<! ch)]
+                      (if value
+                        (let [[tenant path] value]
+                          (try
+                            (dorun (map #(let [id (constuct-id (:tenant %)
+                                                               (:path %))]
+                                           (when-not (exists-fn id)
+                                             (update-fn id %)))
+                                        (get-all-paths tenant path)))
+                            (catch Exception e
+                              (log-error e tenant path))))
+                        (when (not @data-stored?)
+                          (swap! data-stored? (fn [_] true))))))
+    ch))
+
 (defn elasticsearch-metric-store
   "Elasticsearch path store."
   [url options]
@@ -44,7 +73,10 @@
   (let [index (:elasticsearch-index options default-es-index)
         conn (esr/connect url)
         exists-fn (partial esrd/present? conn index es-def-type)
-        update-fn (partial esrd/put conn index es-def-type)]
+        update-fn (partial esrd/put conn index es-def-type)
+        chan-size (:elasticsearch-channel-size options default-es-channel-size)
+        data-stored? (atom false)
+        channel (get-channel exists-fn update-fn chan-size data-stored?)]
     (log/info (str "The path store has been created. "
                    "URL: " url ", "
                    "index: " index))
@@ -56,17 +88,17 @@
       PathStore
       (insert [this tenant path]
         (try
-          (dorun (map #(let [id (constuct-id (:tenant %) (:path %))]
-                         (when-not (exists-fn id)
-                           (update-fn id %)))
-                      (get-all-paths tenant path)))
+          (async/>!! channel [tenant path])
           (catch Exception e
-            (wlog/error "Path store error: " e))))
+            (log-error e tenant path))))
       (exist? [this tenant path]
         (try
           (exists-fn (constuct-id tenant path))
           (catch Exception e
-            (wlog/error "Path store error: " e))))
+            (log-error e tenant path))))
       (shutdown [this]
         (log/info "Shutting down the path store...")
+        (async/close! channel)
+        (while (not @data-stored?)
+          (Thread/sleep 100))
         (log/info "The path store has been down")))))
