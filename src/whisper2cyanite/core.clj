@@ -231,6 +231,7 @@
           (when mstore
             (mstore/shutdown mstore))
           (when pstore
+            (pstore/show-stats (pstore/get-stats pstore))
             (pstore/shutdown pstore)))))
     (catch Exception e
       (wlog/unhandled-error e)))
