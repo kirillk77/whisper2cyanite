@@ -125,9 +125,7 @@
 (defn- process-file
   "Process a file."
   [file dir mstore pstore tenant from to options processor]
-  (let [path (whisper/file-to-name file dir)
-        mstore-processed (:processed (:data-mstore-stats options))
-        pstore-processed (:processed (:data-pstore-stats options))]
+  (let [path (whisper/file-to-name file dir)]
     (when pstore
       (swap! pstore-processed inc)
       (process-path processor path))
