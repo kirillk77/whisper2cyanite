@@ -47,20 +47,6 @@
   (swap! stats-error-paths conj path)
   (wlog/error (format "Path store error: %s, path: %s" error path)))
 
-(defn show-stats
-  "Show stats."
-  [stats]
-  (let [{:keys [processed errors error-paths]} stats]
-    (log/info (format "Path store stats: processed: %s, errors: %s%s"
-                      processed errors (if (> (count error-paths) 0)
-                                         (str ", erroneous paths:\n"
-                                              (str/join "\n" error-paths))
-                                         "")))
-    (newline)
-    (println "Path store stats:")
-    (println "  Processed:" processed)
-    (println "  Errors:   " errors)))
-
 (defn- get-channel
   "Get store channel."
   [exists-fn update-fn chan-size data-stored? stats-error-paths]
@@ -114,15 +100,11 @@
       (exist? [this tenant path]
         (try
           (swap! stats-processed inc)
-          (let [exist? (exists-fn (constuct-id tenant path))]
-            (when-not exist?
-              (swap! stats-error-paths conj path))
-            exist?)
+          (exists-fn (constuct-id tenant path))
           (catch Exception e
             (log-error stats-error-paths e path))))
       (get-stats [this]
         {:processed @stats-processed
-         :errors (count @stats-error-paths)
          :error-paths @stats-error-paths})
       (shutdown [this]
         (log/info "Shutting down the path store...")

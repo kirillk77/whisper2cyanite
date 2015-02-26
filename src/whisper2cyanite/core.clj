@@ -1,6 +1,7 @@
 (ns whisper2cyanite.core
   (:import (java.io RandomAccessFile))
   (:require [clj-whisper.core :as whisper]
+            [clojure.string :as str]
             [com.climate.claypoole :as cp]
             [clojure.java.io :as io]
             [clj-progress.core :as prog]
@@ -44,7 +45,8 @@
 
 (defn- validate-value
   "Validate a value."
-  [rollup period path time w-value s-value validate-fn msg error-reported?]
+  [rollup period path time w-value s-value validate-fn msg error-reported?
+   error-paths]
   (let [valid? (validate-fn w-value s-value)
         err (format
              (str "Metric store validation. "
@@ -54,6 +56,7 @@
     (when-not valid?
       (if-not @error-reported?
         (do
+          (swap! error-paths conj path)
           (wlog/error err)
           (swap! error-reported? (fn [_] true)))
         (log/debug err)))
@@ -72,7 +75,8 @@
         validators [[#(not= %2 nil) "Point not found"]
                     [#(sequential? %2) "Value is not an array"]
                     [#(= (count %2) 1) "Array size is not equal to 1"]
-                    [#(= %1 (first %2)) "Values are not equal"]]]
+                    [#(= %1 (first %2)) "Values are not equal"]]
+        error-paths (:error-paths (:data-mstore-stats options))]
     (doseq [point series]
       (let [time (first point)
             w-value (last point)
@@ -81,7 +85,8 @@
           (log-point "Validating point" rollup period path time w-value ttl)
           (let [s-value (get mstore-series time)]
             (every? #(validate-value rollup period path time w-value s-value
-                                     (first %) (second %) error-reported?)
+                                     (first %) (second %) error-reported?
+                                     error-paths)
                     validators)))))))
 
 (defn- process-archive
@@ -98,27 +103,33 @@
 
 (defn- migrate-path
   "Migrate a path."
-  [pstore tenant path]
-  (when pstore
-    (pstore/insert pstore tenant path)))
+  [pstore tenant path options]
+  (let [run (:run options false)]
+    (when run
+      (pstore/insert pstore tenant path))))
 
 (defn- validate-path
   "Validate a path."
-  [pstore tenant path]
-  (when pstore
+  [pstore tenant path options]
+  (let [error-paths (:error-paths (:data-pstore-stats options))]
     (when-not (pstore/exist? pstore tenant path)
+      (swap! error-paths conj path)
       (wlog/error "Path not found in the path store: " path))))
 
 (defn- process-file
   "Process a file."
   [file dir mstore pstore tenant from to options path-fn points-fn]
-  (let [path (whisper/file-to-name file dir)]
-    (when path-fn
-      (path-fn pstore tenant path))
+  (let [path (whisper/file-to-name file dir)
+        mstore-processed (:processed (:data-mstore-stats options))
+        pstore-processed (:processed (:data-pstore-stats options))]
+    (when (and pstore path-fn)
+      (swap! pstore-processed inc)
+      (path-fn pstore tenant path options))
     (when mstore
       (let [ra-file (RandomAccessFile. file "r")
             rollups (:rollups options)]
         (try
+          (swap! mstore-processed inc)
           (let [info (whisper/read-info-ra ra-file file)
                 archives (:archives info)]
             (doseq [archive archives]
@@ -193,6 +204,38 @@
       (throw (Exception. (str "Invalid TO value: " to))))
     {:from from :to to}))
 
+;; (defn- merge-stats
+;;   "Merge stats structures."
+;;   [total store]
+;;   (let [store (if store store {:processed 0 :error-paths (sorted-set)})
+;;         merged (merge total store)]
+;;     (assoc merged :error-paths (clojure.set/union (:error-paths total)
+;;                                                   (:error-paths store)))))
+
+(defn- deref-stats
+  [stats]
+  {:processed (deref (:processed stats))
+   :error-paths (deref (:error-paths stats))})
+
+(defn- show-stats
+  "Show metric store stats."
+  [title data-stats store-stats]
+  (let [processed (:processed data-stats)
+        data-errors (count (:error-paths data-stats))
+        store-errors (count (:error-paths store-stats))]
+    ;; (log/info (format "%s: %s, errors: %s%s" title processed errors
+    ;;                   (if (> (+ data-errors store-errors) 0)
+    ;;                     (str ", erroneous paths:\n"
+    ;;                          (str/join "\n" error-paths))
+    ;;                     "")))
+    (log/info (format "%s: processed %s, store errors: %s, data errors: %s"
+                      title processed store-errors data-errors))
+    (newline)
+    (println (str title ":"))
+    (println "  Processed:   " processed)
+    (println "  Store errors:" (count (:error-paths store-stats)))
+    (println "  Data errors: " data-errors)))
+
 (defn- process
   "Process a Whisper database."
   [source tenant cass-host es-url options path-fn points-fn start-title title]
@@ -207,6 +250,13 @@
           pool (cp/threadpool jobs)
           mstore (create-mstore cass-host options)
           pstore (create-pstore es-url options)
+          data-mstore-stats {:processed (atom 0)
+                             :error-paths (atom (sorted-set))}
+          data-pstore-stats {:processed (atom 0)
+                             :error-paths (atom (sorted-set))}
+          options (-> options
+                      (assoc :data-mstore-stats data-mstore-stats)
+                      (assoc :data-pstore-stats data-pstore-stats))
           process-file-fn (fn [file]
                             (wlog/info "Processing path: " file)
                             (when-not @wlog/print-log?
@@ -229,9 +279,13 @@
           (wlog/unhandled-error e))
         (finally
           (when mstore
+            (deref-stats data-mstore-stats)
+            (show-stats "Metric store stats" (deref-stats data-mstore-stats)
+                        (mstore/get-stats mstore))
             (mstore/shutdown mstore))
           (when pstore
-            (pstore/show-stats (pstore/get-stats pstore))
+            (show-stats "Path store stats" (deref-stats data-pstore-stats)
+                        (pstore/get-stats pstore))
             (pstore/shutdown pstore)))))
     (catch Exception e
       (wlog/unhandled-error e)))

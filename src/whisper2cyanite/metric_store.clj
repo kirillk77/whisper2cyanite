@@ -12,6 +12,7 @@
 (defprotocol MetricStore
   (insert [this tenant rollup period path time value ttl])
   (fetch-series [this tenant rollup period path from to])
+  (get-stats [this])
   (shutdown [this]))
 
 (def ^:const default-cassandra-keyspace "metric")
@@ -35,7 +36,7 @@
 
 (defn- log-error
   "Log a error."
-  [error rollup period path time]
+  [stats-error-paths error rollup period path time]
   (wlog/error (str "Metric store error: " error ", "
                    "rollup " rollup ", "
                    "period: " period ", "
@@ -44,7 +45,7 @@
 
 (defn- get-channel
   "Get store channel."
-  [session statement chan-size data-stored?]
+  [session statement chan-size data-stored? stats-error-paths]
   (let [ch (async/chan chan-size)]
     (utils/go-while (not @data-stored?)
                     (let [value (async/<! ch)]
@@ -57,9 +58,11 @@
                                                  :consistency :any})
                              (fn [rows-or-e]
                                (if (instance? Throwable rows-or-e)
-                                 (log-error rows-or-e rollup period path time))))
+                                 (log-error stats-error-paths rows-or-e rollup
+                                            period path time))))
                             (catch Exception e
-                              (log-error e rollup period path time))))
+                              (log-error stats-error-paths e rollup period
+                                         path time))))
                         (when (not @data-stored?)
                           (swap! data-stored? (fn [_] true))))))
     ch))
@@ -78,7 +81,10 @@
         insert! (get-cassandra-insert session)
         chan-size (:cassandra-channel-size options default-cassandra-channel-size)
         data-stored? (atom false)
-        channel (get-channel session insert! chan-size data-stored?)]
+        stats-error-paths (atom (sorted-set))
+        stats-processed (atom 0)
+        channel (get-channel session insert! chan-size data-stored?
+                             stats-error-paths)]
     (log/info (str "The metric store has been created. "
                    "Keyspace: " keyspace ", "
                    "channel size: " chan-size))
@@ -86,13 +92,15 @@
       MetricStore
       (insert [this tenant rollup period path time value ttl]
         (try
+          (swap! stats-processed inc)
           (async/>!! channel [(int ttl) [(double value)] (str tenant)
                               (int rollup) (int period) (str path)
                               (long time)])
           (catch Exception e
-            (log-error e rollup period path time))))
+            (log-error stats-error-paths e rollup period path time))))
       (fetch-series [this tenant rollup period path from to]
         (try
+          (swap! stats-processed inc)
           (let [series (atom {})]
             (let [rows (.execute session (format fetch-cql tenant rollup period
                                                  path from to))
@@ -106,7 +114,11 @@
                       (recur (.one rows)))))))
             @series)
           (catch Exception e
+            (swap! stats-error-paths conj path)
             (wlog/error "Metric store error: " e))))
+      (get-stats [this]
+        {:processed @stats-processed
+         :error-paths @stats-error-paths})
       (shutdown [this]
         (log/info "Shutting down the metric store...")
         (async/close! channel)
