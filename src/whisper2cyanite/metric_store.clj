@@ -10,8 +10,8 @@
             PreparedStatement]))
 
 (defprotocol MetricStore
-  (insert [this tenant rollup period path time value ttl])
-  (fetch-series [this tenant rollup period path from to])
+  (insert [this tenant rollup period path time value ttl file])
+  (fetch-series [this tenant rollup period path from to file])
   (get-stats [this])
   (shutdown [this]))
 
@@ -36,7 +36,8 @@
 
 (defn- log-error
   "Log a error."
-  [stats-error-paths error rollup period path time]
+  [stats-error-files file error rollup period path time]
+  (swap! stats-error-files conj file)
   (wlog/error (str "Metric store error: " error ", "
                    "rollup " rollup ", "
                    "period: " period ", "
@@ -45,12 +46,14 @@
 
 (defn- get-channel
   "Get store channel."
-  [session statement chan-size data-stored? stats-error-paths]
+  [session statement chan-size data-stored? stats-error-files]
   (let [ch (async/chan chan-size)]
     (utils/go-while (not @data-stored?)
-                    (let [value (async/<! ch)]
-                      (if value
-                        (let [[_ _ tenant rollup period path time] value]
+                    (let [data (async/<! ch)]
+                      (if data
+                        (let [value (:value data)
+                              [_ _ tenant rollup period path time] value
+                              file (:file data)]
                           (try
                             (async/take!
                              (alia/execute-chan session statement
@@ -58,10 +61,10 @@
                                                  :consistency :any})
                              (fn [rows-or-e]
                                (if (instance? Throwable rows-or-e)
-                                 (log-error stats-error-paths rows-or-e rollup
-                                            period path time))))
+                                 (log-error stats-error-files file rows-or-e
+                                            rollup period path time))))
                             (catch Exception e
-                              (log-error stats-error-paths e rollup period
+                              (log-error stats-error-files file e rollup period
                                          path time))))
                         (when (not @data-stored?)
                           (swap! data-stored? (fn [_] true))))))
@@ -81,24 +84,25 @@
         insert! (get-cassandra-insert session)
         chan-size (:cassandra-channel-size options default-cassandra-channel-size)
         data-stored? (atom false)
-        stats-error-paths (atom (sorted-set))
+        stats-error-files (atom (sorted-set))
         stats-processed (atom 0)
         channel (get-channel session insert! chan-size data-stored?
-                             stats-error-paths)]
+                             stats-error-files)]
     (log/info (str "The metric store has been created. "
                    "Keyspace: " keyspace ", "
                    "channel size: " chan-size))
     (reify
       MetricStore
-      (insert [this tenant rollup period path time value ttl]
+      (insert [this tenant rollup period path time value ttl file]
         (try
           (swap! stats-processed inc)
-          (async/>!! channel [(int ttl) [(double value)] (str tenant)
-                              (int rollup) (int period) (str path)
-                              (long time)])
+          (async/>!! channel {:value [(int ttl) [(double value)] (str tenant)
+                                      (int rollup) (int period) (str path)
+                                      (long time)]
+                              :file file})
           (catch Exception e
-            (log-error stats-error-paths e rollup period path time))))
-      (fetch-series [this tenant rollup period path from to]
+            (log-error stats-error-files file e rollup period path time))))
+      (fetch-series [this tenant rollup period path from to file]
         (try
           (swap! stats-processed inc)
           (let [series (atom {})]
@@ -114,11 +118,11 @@
                       (recur (.one rows)))))))
             @series)
           (catch Exception e
-            (swap! stats-error-paths conj path)
+            (swap! stats-error-files conj file)
             (wlog/error "Metric store error: " e))))
       (get-stats [this]
         {:processed @stats-processed
-         :error-paths @stats-error-paths})
+         :error-files @stats-error-files})
       (shutdown [this]
         (log/info "Shutting down the metric store...")
         (async/close! channel)

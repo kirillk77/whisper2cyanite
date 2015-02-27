@@ -9,8 +9,8 @@
             [whisper2cyanite.utils :as utils]))
 
 (defprotocol PathStore
-  (insert [this tenant path])
-  (exist? [this tenant path])
+  (insert [this tenant path file])
+  (exist? [this tenant path file])
   (get-stats [this])
   (shutdown [this]))
 
@@ -43,18 +43,18 @@
 
 (defn- log-error
   "Log a error."
-  [stats-error-paths error path]
-  (swap! stats-error-paths conj path)
+  [stats-error-files file error path]
+  (swap! stats-error-files conj file)
   (wlog/error (format "Path store error: %s, path: %s" error path)))
 
 (defn- get-channel
   "Get store channel."
-  [exists-fn update-fn chan-size data-stored? stats-error-paths]
+  [exists-fn update-fn chan-size data-stored? stats-error-files]
   (let [ch (async/chan chan-size )]
     (utils/go-while (not @data-stored?)
                     (let [value (async/<! ch)]
                       (if value
-                        (let [[tenant path] value]
+                        (let [[tenant path file] value]
                           (try
                             (dorun (map #(let [id (constuct-id (:tenant %)
                                                                (:path %))]
@@ -62,7 +62,7 @@
                                              (update-fn id %)))
                                         (get-all-paths tenant path)))
                             (catch Exception e
-                              (log-error stats-error-paths e path))))
+                              (log-error stats-error-files file e path))))
                         (when (not @data-stored?)
                           (swap! data-stored? (fn [_] true))))))
     ch))
@@ -77,10 +77,10 @@
         update-fn (partial esrd/put conn index es-def-type)
         chan-size (:elasticsearch-channel-size options default-es-channel-size)
         data-stored? (atom false)
-        stats-error-paths (atom (sorted-set))
+        stats-error-files (atom (sorted-set))
         stats-processed (atom 0)
         channel (get-channel exists-fn update-fn chan-size data-stored?
-                             stats-error-paths)]
+                             stats-error-files)]
     (log/info (str "The path store has been created. "
                    "URL: " url ", "
                    "index: " index ", "
@@ -91,21 +91,21 @@
       (log/info "The path index has been created"))
     (reify
       PathStore
-      (insert [this tenant path]
+      (insert [this tenant path file]
         (try
           (swap! stats-processed inc)
-          (async/>!! channel [tenant path])
+          (async/>!! channel [tenant path file])
           (catch Exception e
-            (log-error stats-error-paths e path))))
-      (exist? [this tenant path]
+            (log-error stats-error-files file e path))))
+      (exist? [this tenant path file]
         (try
           (swap! stats-processed inc)
           (exists-fn (constuct-id tenant path))
           (catch Exception e
-            (log-error stats-error-paths e path))))
+            (log-error stats-error-files file e path))))
       (get-stats [this]
         {:processed @stats-processed
-         :error-paths @stats-error-paths})
+         :error-files @stats-error-files})
       (shutdown [this]
         (log/info "Shutting down the path store...")
         (async/close! channel)

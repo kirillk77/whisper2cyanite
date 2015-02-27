@@ -19,12 +19,12 @@
 (def mstore-processed (atom 0))
 (def pstore-processed (atom 0))
 
-(def mstore-error-paths (atom (sorted-set)))
-(def pstore-error-paths (atom (sorted-set)))
+(def mstore-error-files (atom (sorted-set)))
+(def pstore-error-files (atom (sorted-set)))
 
 (defprotocol Processor
-  (process-metrics [this rollup period retention path series])
-  (process-path [this path]))
+  (process-metrics [this rollup period retention path file series])
+  (process-path [this path file]))
 
 (defn- calc-ttl
   "Calc a TTL value."
@@ -45,7 +45,7 @@
         min-ttl (:min-ttl options default-min-ttl)]
     (reify
       Processor
-      (process-metrics [this rollup period retention path series]
+      (process-metrics [this rollup period retention path file series]
         (doseq [point series]
           (let [time (first point)
                 value (last point)
@@ -54,15 +54,15 @@
               (log-point "Migrating point" rollup period path time value ttl)
               (when run
                 (mstore/insert mstore tenant rollup period path time value
-                               ttl))))))
-      (process-path [this path]
+                               ttl file))))))
+      (process-path [this path file]
         (when run
-          (pstore/insert pstore tenant path))))))
+          (pstore/insert pstore tenant path file))))))
 
 (defn- validate-value
   "Validate a value."
   [rollup period path time w-value s-value validate-fn msg error-reported?
-   error-paths]
+   error-files file]
   (let [valid? (validate-fn w-value s-value)
         err (format
              (str "Metric store validation. "
@@ -72,7 +72,7 @@
     (when-not valid?
       (if-not @error-reported?
         (do
-          (swap! mstore-error-paths conj path)
+          (swap! mstore-error-files conj file)
           (wlog/error err)
           (swap! error-reported? (fn [_] true)))
         (log/debug err)))
@@ -84,12 +84,12 @@
   (let [min-ttl (:min-ttl options default-min-ttl)]
     (reify
       Processor
-      (process-metrics [this rollup period retention path series]
+      (process-metrics [this rollup period retention path file series]
         (let [series (whisper/sort-series series)
               from (first (first series))
               to (first (last series))
               mstore-series (mstore/fetch-series mstore tenant rollup period path
-                                                 from to)
+                                                 from to file)
               error-reported? (atom false)
               validators [[#(not= %2 nil) "Point not found"]
                           [#(sequential? %2) "Value is not an array"]
@@ -104,11 +104,12 @@
                 (let [s-value (get mstore-series time)]
                   (every? #(validate-value rollup period path time w-value
                                            s-value (first %) (second %)
-                                           error-reported? mstore-error-paths)
+                                           error-reported? mstore-error-files
+                                           file)
                           validators)))))))
-      (process-path [this path]
-        (when-not (pstore/exist? pstore tenant path)
-          (swap! pstore-error-paths conj path)
+      (process-path [this path file]
+        (when-not (pstore/exist? pstore tenant path file)
+          (swap! pstore-error-files conj file)
           (wlog/error "Path not found in the path store: " path))))))
 
 (defn- process-archive
@@ -120,7 +121,7 @@
         retention (if retention retention (* rollup points))
         data (whisper/fetch-archive-seq-ra ra-file file archive from to)
         series (whisper/remove-nulls (:series data))]
-    (process-metrics processor rollup period retention path series)))
+    (process-metrics processor rollup period retention path file series)))
 
 (defn- process-file
   "Process a file."
@@ -128,7 +129,7 @@
   (let [path (whisper/file-to-name file dir)]
     (when pstore
       (swap! pstore-processed inc)
-      (process-path processor path))
+      (process-path processor path file))
     (when mstore
       (let [ra-file (RandomAccessFile. file "r")
             rollups (:rollups options)]
@@ -208,44 +209,53 @@
       (throw (Exception. (str "Invalid TO value: " to))))
     {:from from :to to}))
 
-;; (defn- merge-stats
-;;   "Merge stats structures."
-;;   [total store]
-;;   (let [store (if store store {:processed 0 :error-paths (sorted-set)})
-;;         merged (merge total store)]
-;;     (assoc merged :error-paths (clojure.set/union (:error-paths total)
-;;                                                   (:error-paths store)))))
-
 (defn- show-store-stats
   "Show store stats."
   [title data-stats store-stats]
   (let [processed (:processed data-stats)
-        data-errors (count (:error-paths data-stats))
-        store-errors (count (:error-paths store-stats))]
+        data-errors (count (:error-files data-stats))
+        store-errors (count (:error-files store-stats))]
     ;; (log/info (format "%s: %s, errors: %s%s" title processed errors
     ;;                   (if (> (+ data-errors store-errors) 0)
     ;;                     (str ", erroneous paths:\n"
-    ;;                          (str/join "\n" error-paths))
+    ;;                          (str/join "\n" error-files))
     ;;                     "")))
     (log/info (format "%s: processed %s, store errors: %s, data errors: %s"
                       title processed store-errors data-errors))
     (newline)
     (println (str title ":"))
     (println "  Processed:   " processed)
-    (println "  Store errors:" (count (:error-paths store-stats)))
+    (println "  Store errors:" store-errors)
     (println "  Data errors: " data-errors)))
+
+(defn- log-error-files
+  "Log erroneous files."
+  [title data-files store-files]
+  (let [files (clojure.set/union data-files store-files)]
+    (when (> (count files) 0)
+      (log/info (str title ":\n" (str/join "\n" files) )))))
 
 (defn- show-stats
   "Show stats."
   [mstore pstore]
-  (when mstore
-    (show-store-stats "Metric store stats" {:processed @mstore-processed
-                                            :error-paths @mstore-error-paths}
-                      (mstore/get-stats mstore)))
-  (when pstore
-    (show-store-stats "Path store stats" {:processed @pstore-processed
-                                          :error-paths @pstore-error-paths}
-                      (pstore/get-stats pstore))))
+  (let [mstore-stats (if mstore (mstore/get-stats mstore) nil)
+        pstore-stats (if pstore (pstore/get-stats pstore) nil)]
+    (when mstore-stats
+      (show-store-stats "Metric store stats" {:processed @mstore-processed
+                                              :error-files @mstore-error-files}
+                        mstore-stats))
+    (when pstore-stats
+      (show-store-stats "Path store stats" {:processed @pstore-processed
+                                            :error-files @pstore-error-files}
+                        pstore-stats))
+    (when mstore-stats
+      (log-error-files (str "Files during processing which errors occurred "
+                            "in the metric store")
+                       @mstore-error-files (:error-files mstore-stats)))
+    (when pstore-stats
+      (log-error-files (str "Files during processing which errors occurred "
+                            "in the path store")
+                       @pstore-error-files (:error-files pstore-stats)))))
 
 (defn- shutdown
   "Shutdown."
@@ -291,8 +301,8 @@
         (catch Exception e
           (wlog/unhandled-error e))
         (finally
-          (show-stats mstore pstore)
-          (shutdown mstore pstore))))
+          (shutdown mstore pstore)
+          (show-stats mstore pstore))))
     (catch Exception e
       (wlog/unhandled-error e)))
   (wlog/exit 0))
