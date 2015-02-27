@@ -216,8 +216,8 @@
 ;;     (assoc merged :error-paths (clojure.set/union (:error-paths total)
 ;;                                                   (:error-paths store)))))
 
-(defn- show-stats
-  "Show metric store stats."
+(defn- show-store-stats
+  "Show store stats."
   [title data-stats store-stats]
   (let [processed (:processed data-stats)
         data-errors (count (:error-paths data-stats))
@@ -234,6 +234,26 @@
     (println "  Processed:   " processed)
     (println "  Store errors:" (count (:error-paths store-stats)))
     (println "  Data errors: " data-errors)))
+
+(defn- show-stats
+  "Show stats."
+  [mstore pstore]
+  (when mstore
+    (show-store-stats "Metric store stats" {:processed @mstore-processed
+                                            :error-paths @mstore-error-paths}
+                      (mstore/get-stats mstore)))
+  (when pstore
+    (show-store-stats "Path store stats" {:processed @pstore-processed
+                                          :error-paths @pstore-error-paths}
+                      (pstore/get-stats pstore))))
+
+(defn- shutdown
+  "Shutdown."
+  [mstore pstore]
+  (when mstore
+    (mstore/shutdown mstore))
+  (when pstore
+    (pstore/shutdown pstore)))
 
 (defn- process
   "Process a Whisper database."
@@ -271,16 +291,8 @@
         (catch Exception e
           (wlog/unhandled-error e))
         (finally
-          (when mstore
-            (show-stats "Metric store stats" {:processed @mstore-processed
-                                              :error-paths @mstore-error-paths}
-                        (mstore/get-stats mstore))
-            (mstore/shutdown mstore))
-          (when pstore
-            (show-stats "Path store stats" {:processed @pstore-processed
-                                            :error-paths @pstore-error-paths}
-                        (pstore/get-stats pstore))
-            (pstore/shutdown pstore)))))
+          (show-stats mstore pstore)
+          (shutdown mstore pstore))))
     (catch Exception e
       (wlog/unhandled-error e)))
   (wlog/exit 0))
