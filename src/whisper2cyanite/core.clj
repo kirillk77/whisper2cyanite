@@ -215,11 +215,6 @@
   (let [processed (:processed data-stats)
         data-errors (count (:error-files data-stats))
         store-errors (count (:error-files store-stats))]
-    ;; (log/info (format "%s: %s, errors: %s%s" title processed errors
-    ;;                   (if (> (+ data-errors store-errors) 0)
-    ;;                     (str ", erroneous paths:\n"
-    ;;                          (str/join "\n" error-files))
-    ;;                     "")))
     (log/info (format "%s: processed %s, store errors: %s, data errors: %s"
                       title processed store-errors data-errors))
     (newline)
