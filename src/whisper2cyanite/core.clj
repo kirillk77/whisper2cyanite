@@ -7,9 +7,9 @@
             [clj-progress.core :as prog]
             [clojure.tools.logging :as log]
             [whisper2cyanite.utils :as utils]
-            [whisper2cyanite.logging :as wlog]
             [whisper2cyanite.metric-store :as mstore]
-            [whisper2cyanite.path-store :as pstore]))
+            [whisper2cyanite.path-store :as pstore]
+            [whisper2cyanite.logging :as wlog]))
 
 (def ^:const default-jobs 1)
 (def ^:const default-min-ttl 3600)
@@ -305,6 +305,12 @@
 (defn migrate
   "Do the migration."
   [source tenant cass-host es-url options]
+  (when-not (:run options false)
+    (newline)
+    (let [warn-str (str "DRY MODE IS ON! "
+                        "To run in the normal mode use the '--run' option.")]
+      (println warn-str)
+      (log/warn warn-str)))
   (process source tenant cass-host es-url options migrator "Starting migration"
            "Migrating"))
 

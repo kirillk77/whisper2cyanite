@@ -4,6 +4,8 @@
             [clojure.tools.logging :as log]
             [org.spootnik.logconfig :as logconfig]))
 
+(logconfig/start-logging! {:level "off" :console false :files ""})
+
 (def ^:const default-log-file "whisper2cyanite.log")
 (def ^:const default-log-level "info")
 

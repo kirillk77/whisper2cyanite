@@ -1,11 +1,11 @@
 (ns whisper2cyanite.cli
   (:require [clojure.string :as str]
             [clojure.tools.cli :as cli]
-            [org.spootnik.logconfig :as logconfig]
+            [whisper2cyanite.metric-store :as mstore]
+            [whisper2cyanite.path-store :as pstore]
             [whisper2cyanite.core :as core]
             [whisper2cyanite.logging :as wlog]
-            [whisper2cyanite.metric-store :as mstore]
-            [whisper2cyanite.path-store :as pstore])
+            [org.spootnik.logconfig :as logconfig])
   (:gen-class))
 
 (def cli-commands #{"migrate" "validate" "list" "info" "fetch" "help"})
