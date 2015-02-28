@@ -29,7 +29,7 @@
   (->> ["Whisper to Cyanite data migration tool"
         ""
         "Usage: "
-        "  whisper2cyanite [options] migrate <directory | file> <tenant> <cassandra-host,...> <elasticsearch-url>"
+        "  whisper2cyanite [options] migrate <directory | whisper file | filelist file> <tenant> <cassandra-host,...> <elasticsearch-url>"
         "  whisper2cyanite [options] validate <directory | file> <tenant> <cassandra-host,...> <elasticsearch-url>"
         "  whisper2cyanite list <directory>"
         "  whisper2cyanite info <file>"

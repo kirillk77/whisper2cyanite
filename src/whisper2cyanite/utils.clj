@@ -17,3 +17,24 @@
   "Get canonical path."
   [path]
   (.getCanonicalPath (io/file path)))
+
+(defn is-directory?
+  "Is path a directory?"
+  [path]
+  (.isDirectory (io/file path)))
+
+(defn extract-file
+  "Extract a file name from a path."
+  [path]
+  (let [f (io/file path)]
+    (if (.isFile f) (.getName f) "")))
+
+(defn extract-extension
+  "Extract a file extension from a path."
+  [path]
+  (if-let [ext (re-find #"\..*$" (extract-file path))] ext ""))
+
+(defn extract-directory
+  "Extract a directory from a path."
+  [path]
+  (.getParent (io/file path)))

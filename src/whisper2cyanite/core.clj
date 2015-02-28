@@ -148,29 +148,45 @@
           (finally
             (.close ra-file)))))))
 
+(defn- is-whisper?
+  "Is the file a Whisper database?"
+  [file]
+  (= (utils/extract-extension file) ".wsp" ))
+
+(defn- get-paths-from-file
+  "Get paths form a file."
+  [file]
+  (if (is-whisper? file)
+    [file]
+    (do
+      (wlog/info (str "Loading paths from file: " file))
+      (remove str/blank? (map str/trim (str/split-lines (slurp file)))))))
+
 (defn- get-paths
   "Get paths."
   [source]
-  (let [paths (if (.isDirectory (io/file source))
+  (let [is-dir? (utils/is-directory? source)
+        paths (if is-dir?
                 (whisper/get-paths source)
-                [source])]
-    (newline)
-    (wlog/info "Getting paths...")
-    (when-not @wlog/print-log?
-      (println "Getting paths")
-      (prog/set-progress-bar! "[:bar] :done")
-      (prog/config-progress-bar! :width pbar-width)
-      (prog/init 0)
-      (doseq [path paths]
-        (prog/tick))
-      (prog/done))
+                (get-paths-from-file source))]
+    (when is-dir?
+      (newline)
+      (wlog/info "Getting paths...")
+      (when-not @wlog/print-log?
+        (println "Getting paths")
+        (prog/set-progress-bar! "[:bar] :done")
+        (prog/config-progress-bar! :width pbar-width)
+        (prog/init 0)
+        (doseq [path paths]
+          (prog/tick))
+        (prog/done)))
     (wlog/info (format "Found %s paths" (count paths)))
     (sort paths)))
 
 (defn- get-root-dir
   "Get root directory."
-  [dir options]
-  (let [dir (utils/get-cpath dir)
+  [source options]
+  (let [dir (utils/extract-directory (utils/get-cpath source))
         root-dir (:root-dir options nil)]
     (if-not root-dir
       dir
@@ -266,9 +282,9 @@
   (wlog/set-logging! options)
   (try
     (wlog/info start-title)
-    (let [root-dir (get-root-dir source options)
-          files (get-paths source)
+    (let [files (get-paths source)
           files-count (count files)
+          root-dir (get-root-dir (first files) options)
           {:keys [from to]} (get-from-to options)
           jobs (:jobs options default-jobs)
           pool (cp/threadpool jobs)
