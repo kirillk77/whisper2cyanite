@@ -8,7 +8,8 @@
             [org.spootnik.logconfig :as logconfig])
   (:gen-class))
 
-(def cli-commands #{"migrate" "validate" "list" "info" "fetch" "help"})
+(def cli-commands #{"migrate" "validate" "list-files" "list-paths"
+                    "info" "fetch" "help"})
 
 (defn- check-rollups
   "Check rollups."
@@ -31,7 +32,8 @@
         "Usage: "
         "  whisper2cyanite [options] migrate <directory | whisper file | filelist file> <tenant> <cassandra-host,...> <elasticsearch-url>"
         "  whisper2cyanite [options] validate <directory | file> <tenant> <cassandra-host,...> <elasticsearch-url>"
-        "  whisper2cyanite list <directory>"
+        "  whisper2cyanite list-files <directory>"
+        "  whisper2cyanite list-paths <directory>"
         "  whisper2cyanite info <file>"
         "  whisper2cyanite [options] fetch <file> <rollup>"
         "  whisper2cyanite help"
@@ -113,8 +115,15 @@
                 options]} (prepare-common-args arguments options)]
     (core/validate source tenant cass-hosts es-url options)))
 
-(defn- run-list
-  "Run command 'list'."
+(defn- run-list-files
+  "Run command 'list-files'."
+  [command arguments options summary]
+  (check-arguments command arguments 1 1)
+  (check-options command #{} options)
+  (core/list-files (first arguments)))
+
+(defn- run-list-paths
+  "Run command 'list-paths'."
   [command arguments options summary]
   (check-arguments command arguments 1 1)
   (check-options command #{} options)
@@ -185,6 +194,8 @@
          "Default: " wlog/default-log-level)
     :validate [#(or (= (count %) 0)
                     (not= (get logconfig/levels % :not-found) :not-found))]]
+   ;;["-e" "--errors-file FILE"
+   ;; (str "Dump a list of files during processing which the errors occurred")]
    ["-S" "--stop-on-error" "Stop on first non-fatal error"]
    ["-P" "--disable-progress" "Disable progress bar"]])
 

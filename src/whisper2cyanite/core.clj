@@ -336,6 +336,12 @@
   (process source tenant cass-host es-url options validator "Starting validation"
            "Validating"))
 
+(defn list-files
+  "List files."
+  [dir]
+  (doseq [path (sort (whisper/get-paths dir))]
+    (println (utils/get-cpath path))))
+
 (defn list-paths
   "List paths."
   [dir]
