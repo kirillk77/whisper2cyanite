@@ -37,7 +37,7 @@
          (range 1 (inc parts-count)))))
 
 (defn- constuct-id
-  "Construct ID."
+  "Construct an ID."
   [path tenant]
   (str path "_" tenant))
 
@@ -47,8 +47,21 @@
   (swap! stats-error-files conj file)
   (wlog/error (format "Path store error: %s, path: %s" error path)))
 
+(defn- put-path
+  "Put a path."
+  [exists-fn update-fn body stats-error-files file]
+  (let [path (:path body)
+        id (constuct-id (:tenant body) path)]
+    (when-not (exists-fn id)
+      (let [return (update-fn id body)
+            status (:status return)]
+        (when (and status (>= status 400))
+          (log-error stats-error-files file
+                     (str (:error return) ", status: " status
+                          ", file: "file ) path))))))
+
 (defn- get-channel
-  "Get store channel."
+  "Get a store channel."
   [exists-fn update-fn chan-size data-stored? stats-error-files]
   (let [ch (async/chan chan-size )]
     (utils/go-while (not @data-stored?)
@@ -56,10 +69,8 @@
                       (if value
                         (let [[tenant path file] value]
                           (try
-                            (dorun (map #(let [id (constuct-id (:tenant %)
-                                                               (:path %))]
-                                           (when-not (exists-fn id)
-                                             (update-fn id %)))
+                            (dorun (map #(put-path exists-fn update-fn %
+                                                   stats-error-files file)
                                         (get-all-paths tenant path)))
                             (catch Exception e
                               (log-error stats-error-files file e path))))
@@ -68,7 +79,7 @@
     ch))
 
 (defn elasticsearch-metric-store
-  "Elasticsearch path store."
+  "Create an Elasticsearch path store."
   [url options]
   (log/info "Creating the path store...")
   (let [index (:elasticsearch-index options default-es-index)
