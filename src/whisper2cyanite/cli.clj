@@ -95,7 +95,8 @@
                            :cassandra-channel-size :disable-metric-store
                            :elasticsearch-index :elasticsearch-channel-size
                            :disable-path-store :log-file :log-level
-                           :disable-log :stop-on-error :disable-progress}
+                           :disable-log :errors-file :stop-on-error
+                           :disable-progress}
                  options)
   (let [{:keys [source tenant cass-hosts es-url
                 options]} (prepare-common-args arguments options)]
@@ -109,7 +110,8 @@
                            :cassandra-keyspace :cassandra-options
                            :disable-metric-store :elasticsearch-index
                            :disable-path-store :log-file :log-level
-                           :disable-log :stop-on-error :disable-progress}
+                           :disable-log :errors-file :stop-on-error
+                           :disable-progress}
                  options)
   (let [{:keys [source tenant cass-hosts es-url
                 options]} (prepare-common-args arguments options)]
@@ -194,8 +196,8 @@
          "Default: " wlog/default-log-level)
     :validate [#(or (= (count %) 0)
                     (not= (get logconfig/levels % :not-found) :not-found))]]
-   ;;["-e" "--errors-file FILE"
-   ;; (str "Dump a list of files during processing which the errors occurred")]
+   ["-e" "--errors-file FILE"
+    (str "Dump a list of files during processing which the errors occurred")]
    ["-S" "--stop-on-error" "Stop on first non-fatal error"]
    ["-P" "--disable-progress" "Disable progress bar"]])
 

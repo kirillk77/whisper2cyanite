@@ -2,6 +2,7 @@
   (:import (java.io RandomAccessFile))
   (:require [clj-whisper.core :as whisper]
             [clojure.string :as str]
+            [clojure.set :as set]
             [com.climate.claypoole :as cp]
             [clojure.java.io :as io]
             [clj-progress.core :as prog]
@@ -241,16 +242,33 @@
 
 (defn- log-error-files
   "Log erroneous files."
-  [title data-files store-files]
-  (let [files (clojure.set/union data-files store-files)]
-    (when (> (count files) 0)
-      (log/info (str title ":\n" (str/join "\n" files) )))))
+  [title files]
+  (when (> (count files) 0)
+    (log/info (str title ":\n" (str/join "\n" files)))))
+
+(defn- dump-error-files
+  "Dump erroneous files."
+  [file error-files]
+  (when (> (count error-files) 0)
+    (wlog/info (str "Dumping a list of files during processing which the errors "
+                    "occurred to the file: ") file)
+    (spit file (str/join "\n" error-files))))
+
+(defn- show-error-files
+  "Show erroneous files."
+  [data-error-files store-stats title error-files]
+  (when store-stats
+    (let [files (set/union @data-error-files (:error-files store-stats))]
+      (log-error-files title files)
+      (swap! error-files set/union @error-files files))))
 
 (defn- show-stats
   "Show stats."
-  [mstore pstore]
+  [mstore pstore options]
   (let [mstore-stats (if mstore (mstore/get-stats mstore) nil)
-        pstore-stats (if pstore (pstore/get-stats pstore) nil)]
+        pstore-stats (if pstore (pstore/get-stats pstore) nil)
+        errors-file (:errors-file options)
+        error-files (atom #{})]
     (when mstore-stats
       (show-store-stats "Metric store stats" {:processed @mstore-processed
                                               :error-files @mstore-error-files}
@@ -259,14 +277,14 @@
       (show-store-stats "Path store stats" {:processed @pstore-processed
                                             :error-files @pstore-error-files}
                         pstore-stats))
-    (when mstore-stats
-      (log-error-files (str "Files during processing which errors occurred "
-                            "in the metric store")
-                       @mstore-error-files (:error-files mstore-stats)))
-    (when pstore-stats
-      (log-error-files (str "Files during processing which errors occurred "
-                            "in the path store")
-                       @pstore-error-files (:error-files pstore-stats)))))
+    (show-error-files mstore-error-files mstore-stats
+                      (str "Files during processing which errors occurred "
+                           "in the metric store") error-files)
+    (show-error-files pstore-error-files pstore-stats
+                      (str "Files during processing which errors occurred "
+                           "in the path store") error-files)
+    (when errors-file
+      (dump-error-files errors-file @error-files))))
 
 (defn- shutdown
   "Shutdown."
@@ -313,7 +331,7 @@
           (wlog/unhandled-error e))
         (finally
           (shutdown mstore pstore)
-          (show-stats mstore pstore))))
+          (show-stats mstore pstore options))))
     (catch Exception e
       (wlog/unhandled-error e)))
   (wlog/exit 0))
