@@ -80,7 +80,7 @@ This command means same as above but:
 
 #### Migrating paths from a database subtree
 
-Dumping names of all Whisper database files to the `path-files.lst` file:
+Dumping names of Whisper database files to the `path-files.lst` file:
 
 ```bash
 whisper2cyanite list-files /var/lib/whisper/requests/nginx > path-files.lst
@@ -125,7 +125,8 @@ whisper2cyanite --jobs 8 --cassandra-options "{:compression :lz4}" \
 
 #### Validating paths from a database subtree
 
-Validating paths from the `/var/lib/whisper/requests/nginx` directory:
+Validating paths from the `/var/lib/whisper/requests/nginx` directory
+(`requests.nginx.*` path store subtree):
 
 ```bash
 whisper2cyanite --jobs 8 --disable-metric-store --root-dir /var/lib/whisper/ \
