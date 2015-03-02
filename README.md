@@ -39,6 +39,9 @@ Built package will be placed in the `target` directory.
 
 #### Migrating a whole database
 
+Typical command for migrating a whole Whisper database to Cyanite looks like
+this:
+
 ```bash
 whisper2cyanite --run --jobs 8 --rollups 60:5356800,900:6220800 --min-ttl 18000 \
   --cassandra-options "{:compression :lz4}" --errors-file error-files.lst \
@@ -76,9 +79,14 @@ This command means same as above but:
 
 #### Migrating paths from a database subtree
 
+Dumping names of all Whisper database files to the `path-files.lst` file:
+
 ```bash
 whisper2cyanite list-files /var/lib/whisper/requests/nginx > path-files.lst
 ```
+
+Reading the `path-files.lst` file and migrating paths taken from there.
+Metric store operations are disabled.
 
 ```bash
 whisper2cyanite --run --jobs 8 --disable-metric-store --root-dir \
@@ -87,7 +95,12 @@ whisper2cyanite --run --jobs 8 --disable-metric-store --root-dir \
 ```
 
 #### Migrating metrics for a predetermined period and a single rollup from a
-database file
+     database file
+
+Migrating metrics from the `/var/lib/whisper/requests/nginx/access.wsp` file
+for period from `1420070400` (01 Jan 2015 00:00:00) until `1421280000` (15 Jan
+2015 00:00:00). All rollups except `60` are ignored. Path store operations are
+disabled.
 
 ```bash
 whisper2cyanite --run --jobs 8 --rollups 60:5356800 --disable-path-store \
@@ -101,7 +114,7 @@ whisper2cyanite --run --jobs 8 --rollups 60:5356800 --disable-path-store \
 #### Validating a whole database
 
 ```bash
-whisper2cyanite --jobs 8 --rollups 60:5356800,900:6220800 --min-ttl 18000 \
+whisper2cyanite --jobs 8  \
   --cassandra-options "{:compression :lz4}" --errors-file error-files.lst \
   validate /var/lib/whisper/ 'my_tenant' cass1.example.org,cass2.example.org \
   http://es.example.org:9200
