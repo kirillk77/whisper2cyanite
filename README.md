@@ -59,7 +59,7 @@ This command means:
 * Use two Cassandra nodes: `cass1.example.org` and `cass2.example.org`
 * Use the Elasticsearch node on `http://es.example.org:9200`
 
-### Retrying to migrate after non-fatal errors occurred
+#### Retrying to migrate after non-fatal errors occurred
 
 ```bash
 whisper2cyanite --run --jobs 8 --rollups 60:5356800,900:6220800 --min-ttl 18000 \
@@ -72,7 +72,7 @@ This command means same as above but:
 * Set database root to the `/var/lib/whisper/` directory
 * Read files to migrate from the `errorfiles.lst` file
 
-### Migrating paths from a database subtree
+#### Migrating paths from a database subtree
 
 ```bash
 whisper2cyanite list-files /var/lib/whisper/requests/nginx > path-files.lst
@@ -84,7 +84,7 @@ whisper2cyanite --run --jobs 8 --disable-metric-store --root-dir \
   http://es.example.org:9200
 ```
 
-### Migrating metrics for a predetermined period and a single rollup from a database file
+#### Migrating metrics for a predetermined period and a single rollup from a database file
 
 ```bash
 whisper2cyanite --run --jobs 8 --rollups 60:5356800 --disable-path-store \
