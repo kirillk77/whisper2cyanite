@@ -36,7 +36,10 @@ Built package will be placed in the `target` directory.
 #### Migrating a whole database
 
 ```bash
-whisper2cyanite --jobs 8 --rollups 60:5356800,900:6220800 --min-ttl 18000 --cassandra-options "{:compression :lz4}" --errors-file errorfiles.lst migrate /var/lib/graphite/storage/whisper/ 'mytenant' cassandra1.example.org,cassandra2.example.org http://es.example.org:9200
+whisper2cyanite --jobs 8 --rollups 60:5356800,900:6220800 --min-ttl 18000 \
+--cassandra-options "{:compression :lz4}" --errors-file errorfiles.lst \
+migrate /var/lib/graphite/storage/whisper/ 'mytenant' \
+cassandra1.example.org,cassandra2.example.org http://es.example.org:9200
 ```
 
 This command means:
