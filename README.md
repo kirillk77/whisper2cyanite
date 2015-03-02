@@ -34,6 +34,40 @@ lein fatdeb
 
 Built package will be placed in the `target` directory.
 
+## Usage
+
+### Commands
+
+* `migrate`
+  Migrate
+
+
+* `validate`
+  Validate
+
+
+* `list-files`
+  List files.
+
+
+* `list-paths`
+  List paths.
+
+
+* `info`
+  Show database info.
+
+
+* `fetch`
+  Fetch metrics.
+
+
+* `help`
+  Show help.
+
+### Options
+
+
 ## Usage scenarios
 
 ### Migrating a database
@@ -86,8 +120,10 @@ Dumping names of Whisper database files to the `path-files.lst` file:
 whisper2cyanite list-files /var/lib/whisper/requests/nginx > path-files.lst
 ```
 
-Reading the `path-files.lst` file and migrating paths taken from there.
-Metric store operations are disabled.
+Reading the `path-files.lst` file and migrating paths taken from
+there. According to previous command, only paths from the
+`/var/lib/whisper/requests/nginx` directory (the `requests.nginx.*` path store
+subtree) will be migrated. Metric store operations are disabled.
 
 ```bash
 whisper2cyanite --run --jobs 8 --disable-metric-store --root-dir \
@@ -125,13 +161,23 @@ whisper2cyanite --jobs 8 --cassandra-options "{:compression :lz4}" \
 
 #### Validating paths from a database subtree
 
-Validating paths from the `/var/lib/whisper/requests/nginx` directory
-(`requests.nginx.*` path store subtree):
+Validating paths from the `/var/lib/whisper/requests/nginx` directory (the
+`requests.nginx.*` path store subtree):
 
 ```bash
 whisper2cyanite --jobs 8 --disable-metric-store --root-dir /var/lib/whisper/ \
   validate /var/lib/whisper/requests/nginx 'my_tenant' cass1.example.org \
   http://es.example.org:9200
+```
+
+#### Validating metrics of a single path
+
+Validating metrics from the `/var/lib/whisper/requests/nginx/access.wsp` file:
+
+```bash
+whisper2cyanite --disable-path-store --root-dir /var/lib/whisper/ migrate \
+  /var/lib/whisper/requests/nginx/access.wsp 'my_tenant' \
+  cass1.example.org,cass2.example.org http://es.example.org:9200
 ```
 
 ## License
@@ -140,5 +186,5 @@ whisper2cyanite is covered by [MIT License](http://opensource.org/licenses/MIT)
 
 ## Thanks
 
-Thanks to [Pierre-Yves Ritschard](https://github.com/pyr) AKA @pyr for his work
+Thanks to [Pierre-Yves Ritschard](https://github.com/pyr) aka @pyr for his work
 on [Cyanite](https://github.com/pyr/cyanite)
