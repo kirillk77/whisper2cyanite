@@ -250,7 +250,7 @@
   "Dump erroneous files."
   [file error-files]
   (when (> (count error-files) 0)
-    (wlog/info (str "Dumping a list of files during processing which the errors "
+    (wlog/info (str "Dumping a list of files during processing which errors "
                     "occurred to the file: ") file)
     (spit file (str/join "\n" error-files))))
 

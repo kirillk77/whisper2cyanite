@@ -197,7 +197,7 @@
     :validate [#(or (= (count %) 0)
                     (not= (get logconfig/levels % :not-found) :not-found))]]
    ["-e" "--errors-file FILE"
-    (str "Dump a list of files during processing which the errors occurred")]
+    (str "Dump a list of files during processing which errors occurred")]
    ["-S" "--stop-on-error" "Stop on first non-fatal error"]
    ["-P" "--disable-progress" "Disable progress bar"]])
 
