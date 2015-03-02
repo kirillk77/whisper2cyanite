@@ -1,7 +1,8 @@
 # whisper2cyanite
 
+whisper2cyanite is a tool for migrating data from
 [Whisper](https://github.com/graphite-project/whisper) to
-[Cyanite](https://github.com/pyr/cyanite) data migration tool
+[Cyanite](https://github.com/pyr/cyanite).
 
 [![Build Status](https://travis-ci.org/cybem/whisper2cyanite.svg?branch=master)](https://travis-ci.org/cybem/whisper2cyanite)
 
@@ -94,8 +95,7 @@ whisper2cyanite --run --jobs 8 --disable-metric-store --root-dir \
   http://es.example.org:9200
 ```
 
-#### Migrating metrics for a predetermined period and a single rollup from a
-     database file
+#### Migrating metrics for a predetermined period and a single rollup from a database file
 
 Migrating metrics from the `/var/lib/whisper/requests/nginx/access.wsp` file
 for period from `1420070400` (01 Jan 2015 00:00:00) until `1421280000` (15 Jan
@@ -103,7 +103,7 @@ for period from `1420070400` (01 Jan 2015 00:00:00) until `1421280000` (15 Jan
 disabled.
 
 ```bash
-whisper2cyanite --run --jobs 8 --rollups 60:5356800 --disable-path-store \
+whisper2cyanite --run --rollups 60:5356800 --disable-path-store \
   --root-dir /var/lib/whisper/ --from 1420070400 --to 1421280000 migrate \
   /var/lib/whisper/requests/nginx/access.wsp 'my_tenant' \
   cass1.example.org,cass2.example.org http://es.example.org:9200
@@ -111,12 +111,25 @@ whisper2cyanite --run --jobs 8 --rollups 60:5356800 --disable-path-store \
 
 ### Validating
 
+Using the command `validate` is very similar to using the command `migrate`.
+
 #### Validating a whole database
 
+Typical command for validating a whole database:
+
 ```bash
-whisper2cyanite --jobs 8  \
-  --cassandra-options "{:compression :lz4}" --errors-file error-files.lst \
-  validate /var/lib/whisper/ 'my_tenant' cass1.example.org,cass2.example.org \
+whisper2cyanite --jobs 8 --cassandra-options "{:compression :lz4}" \
+  --errors-file error-files.lst validate /var/lib/whisper/ 'my_tenant' \
+  cass1.example.org,cass2.example.org http://es.example.org:9200
+```
+
+#### Validating paths from a database subtree
+
+Validating paths from the `/var/lib/whisper/requests/nginx` directory:
+
+```bash
+whisper2cyanite --jobs 8 --disable-metric-store --root-dir /var/lib/whisper/ \
+  validate /var/lib/whisper/requests/nginx 'my_tenant' cass1.example.org \
   http://es.example.org:9200
 ```
 
