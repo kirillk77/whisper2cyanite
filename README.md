@@ -1,5 +1,7 @@
 # whisper2cyanite
-Whisper to Cyanite data migration tool
+
+[Whisper](https://github.com/graphite-project/whisper) to
+[Cyanite](https://github.com/pyr/cyanite) data migration tool
 
 [![Build Status](https://travis-ci.org/cybem/whisper2cyanite.svg?branch=master)](https://travis-ci.org/cybem/whisper2cyanite)
 
@@ -84,7 +86,8 @@ whisper2cyanite --run --jobs 8 --disable-metric-store --root-dir \
   http://es.example.org:9200
 ```
 
-#### Migrating metrics for a predetermined period and a single rollup from a database file
+#### Migrating metrics for a predetermined period and a single rollup from a
+database file
 
 ```bash
 whisper2cyanite --run --jobs 8 --rollups 60:5356800 --disable-path-store \
