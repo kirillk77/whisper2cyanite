@@ -1,6 +1,7 @@
 (ns whisper2cyanite.logging
   (:require [whisper2cyanite.utils :as utils]
             [clojure.string :as str]
+            [clojure.stacktrace :as stacktrace]
             [clojure.tools.logging :as log]
             [org.spootnik.logconfig :as logconfig]))
 
@@ -83,4 +84,5 @@
 (defn unhandled-error
   "Log unhandled error."
   [e]
-  (fatal "Error: " e))
+  (fatal "Error: " e)
+  (stacktrace/print-stack-trace e))

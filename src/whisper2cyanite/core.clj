@@ -6,6 +6,7 @@
             [com.climate.claypoole :as cp]
             [clojure.java.io :as io]
             [clj-progress.core :as prog]
+            [clojure.contrib.humanize :as humanize]
             [clojure.tools.logging :as log]
             [whisper2cyanite.utils :as utils]
             [whisper2cyanite.metric-store :as mstore]
@@ -23,9 +24,12 @@
 (def mstore-error-files (atom (sorted-set)))
 (def pstore-error-files (atom (sorted-set)))
 
+(def cassandra-data-size (atom 0))
+
 (defprotocol Processor
-  (process-metrics [this rollup period retention path file series])
-  (process-path [this path file]))
+  (process-metrics [this rollup period retention points path file series])
+  (process-path [this path file])
+  (fetch-data? [this]))
 
 (defn- calc-ttl
   "Calc a TTL value."
@@ -46,7 +50,7 @@
         min-ttl (:min-ttl options default-min-ttl)]
     (reify
       Processor
-      (process-metrics [this rollup period retention path file series]
+      (process-metrics [this rollup period retention points path file series]
         (doseq [point series]
           (let [time (first point)
                 value (last point)
@@ -58,7 +62,9 @@
                                ttl file))))))
       (process-path [this path file]
         (when run
-          (pstore/insert pstore tenant path file))))))
+          (pstore/insert pstore tenant path file)))
+      (fetch-data? [this]
+        true))))
 
 (defn- validate-value
   "Validate a value."
@@ -85,7 +91,7 @@
   (let [min-ttl (:min-ttl options default-min-ttl)]
     (reify
       Processor
-      (process-metrics [this rollup period retention path file series]
+      (process-metrics [this rollup period retention points path file series]
         (let [series (whisper/sort-series series)
               from (first (first series))
               to (first (last series))
@@ -111,7 +117,34 @@
       (process-path [this path file]
         (when-not (pstore/exist? pstore tenant path file)
           (swap! pstore-error-files conj file)
-          (wlog/error "Path not found in the path store: " path))))))
+          (wlog/error "Path not found in the path store: " path)))
+      (fetch-data? [this]
+        true))))
+
+(defn- calculator
+  "Cassandra data size calculator."
+  [mstore pstore options tenant]
+  (let [period-size 4
+        rollup-size 4
+        tenant-size (count tenant)
+        time-size 8
+        data-size 8
+        row-overhead 23
+        key-overhead 32
+        row-size (+ data-size row-overhead)
+        part-key-size-const (+ period-size rollup-size tenant-size)
+        clust-col-size (+ time-size key-overhead)]
+    (reify
+      Processor
+      (process-metrics [this rollup period retention points path file series]
+        (let [part-key-size (+ part-key-size-const (count path))
+              index-size (+ part-key-size (* clust-col-size points))
+              rows-size (* row-size points)
+              archive-size (+ index-size rows-size)]
+          (swap! cassandra-data-size + archive-size)))
+      (process-path [this path file])
+      (fetch-data? [this]
+        false))))
 
 (defn- process-archive
   "Process an archive."
@@ -120,9 +153,10 @@
         points (:points archive)
         period (if retention (/ retention rollup) points)
         retention (if retention retention (* rollup points))
-        data (whisper/fetch-archive-seq-ra ra-file file archive from to)
-        series (whisper/remove-nulls (:series data))]
-    (process-metrics processor rollup period retention path file series)))
+        data (if (fetch-data? processor)
+               (whisper/fetch-archive-seq-ra ra-file file archive from to) nil)
+        series (if data (whisper/remove-nulls (:series data)) nil)]
+    (process-metrics processor rollup period retention points path file series)))
 
 (defn- process-file
   "Process a file."
@@ -200,12 +234,14 @@
 (defn- create-mstore
   "Create a metric store."
   [cass-host options]
-  (if-not (:disable-metric-store options false)
-    (try
-      (mstore/cassandra-metric-store cass-host options)
-      (catch Exception e
-        (wlog/fatal "Error creating metric store: " e)))
-    nil))
+  (if-not (= cass-host :true)
+    (if-not (:disable-metric-store options false)
+      (try
+        (mstore/cassandra-metric-store cass-host options)
+        (catch Exception e
+          (wlog/fatal "Error creating metric store: " e)))
+      nil)
+    :true))
 
 (defn- create-pstore
   "Create a path store."
@@ -265,7 +301,8 @@
 (defn- show-stats
   "Show stats."
   [mstore pstore options]
-  (let [mstore-stats (if mstore (mstore/get-stats mstore) nil)
+  (let [mstore-stats (if (and mstore (not= mstore :true))
+                       (mstore/get-stats mstore) nil)
         pstore-stats (if pstore (pstore/get-stats pstore) nil)
         errors-file (:errors-file options)
         error-files (atom #{})]
@@ -289,7 +326,7 @@
 (defn- shutdown
   "Shutdown."
   [mstore pstore]
-  (when mstore
+  (when (and mstore (not= mstore :true))
     (mstore/shutdown mstore))
   (when pstore
     (pstore/shutdown pstore)))
@@ -300,9 +337,9 @@
   (wlog/set-logging! options)
   (try
     (wlog/info start-title)
-    (let [files (get-paths source)
+    (let [root-dir (get-root-dir source options)
+          files (get-paths source)
           files-count (count files)
-          root-dir (get-root-dir (first files) options)
           {:keys [from to]} (get-from-to options)
           jobs (:jobs options default-jobs)
           pool (cp/threadpool jobs)
@@ -333,8 +370,7 @@
           (shutdown mstore pstore)
           (show-stats mstore pstore options))))
     (catch Exception e
-      (wlog/unhandled-error e)))
-  (wlog/exit 0))
+      (wlog/unhandled-error e))))
 
 (defn migrate
   "Do the migration."
@@ -346,13 +382,31 @@
       (println warn-str)
       (log/warn warn-str)))
   (process source tenant cass-host es-url options migrator "Starting migration"
-           "Migrating"))
+           "Migrating")
+  (wlog/exit 0))
 
 (defn validate
   "Do the validation."
   [source tenant cass-host es-url options]
   (process source tenant cass-host es-url options validator "Starting validation"
-           "Validating"))
+           "Validating")
+  (wlog/exit 0))
+
+(defn calc-size
+  "Do the Cassandra data size calculation."
+  [source tenant options]
+  (let [options (-> options
+                    (assoc :disable-path-store true)
+                    (assoc :disable-log true)
+                    (assoc :stop-on-error true))]
+    (process source tenant :true nil options calculator
+             "Starting Cassandra data size calculation"
+             "Calculating"))
+  (newline)
+  (println "Estimated Cassandra data size:"
+           (humanize/filesize @cassandra-data-size))
+  (println "Don't forget to multiply size by replication factor!")
+  (wlog/exit 0))
 
 (defn list-files
   "List files."

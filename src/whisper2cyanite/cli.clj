@@ -8,7 +8,7 @@
             [org.spootnik.logconfig :as logconfig])
   (:gen-class))
 
-(def cli-commands #{"migrate" "validate" "list-files" "list-paths"
+(def cli-commands #{"migrate" "validate" "calc-size" "list-files" "list-paths"
                     "info" "fetch" "help"})
 
 (defn- check-rollups
@@ -32,6 +32,7 @@
         "Usage: "
         "  whisper2cyanite [options] migrate <directory | whisper file | filelist file> <tenant> <cassandra-host,...> <elasticsearch-url>"
         "  whisper2cyanite [options] validate <directory | file> <tenant> <cassandra-host,...> <elasticsearch-url>"
+        "  whisper2cyanite [options] calc-size <directory | file> <tenant>"
         "  whisper2cyanite list-files <directory>"
         "  whisper2cyanite list-paths <directory>"
         "  whisper2cyanite info <file>"
@@ -74,10 +75,11 @@
 (defn- prepare-common-args
   "Prepare common arguments."
   [arguments options]
-  (let [source (nth arguments 0)
-        tenant (nth arguments 1)
-        cass-hosts (str/split (nth arguments 2) #",")
-        es-url (nth arguments 3)
+  (let [source (nth arguments 0 nil)
+        tenant (nth arguments 1 nil)
+        cass-hosts (if (> (count arguments) 2)
+                     (str/split (nth arguments 2) #",") nil)
+        es-url (nth arguments 3 nil)
         rollups (->> (:rollups options [])
                      (filter #(not (nil? %)))
                      (flatten)
@@ -116,6 +118,15 @@
   (let [{:keys [source tenant cass-hosts es-url
                 options]} (prepare-common-args arguments options)]
     (core/validate source tenant cass-hosts es-url options)))
+
+(defn- run-calc-size
+  "Run command 'calc-size'."
+  [command arguments options summary]
+  (check-arguments "calc-size" arguments 2 2)
+  (check-options command #{:rollups :jobs :root-dir :disable-progress}
+                 options)
+  (let [{:keys [source tenant options]} (prepare-common-args arguments options)]
+    (core/calc-size source tenant options)))
 
 (defn- run-list-files
   "Run command 'list-files'."

@@ -37,4 +37,6 @@
 (defn extract-directory
   "Extract a directory from a path."
   [path]
-  (.getParent (io/file path)))
+  (if (is-directory? path)
+    path
+    (.getParent (io/file path))))
