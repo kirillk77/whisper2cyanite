@@ -183,15 +183,10 @@
           (finally
             (.close ra-file)))))))
 
-(defn- is-whisper?
-  "Is the file a Whisper database?"
-  [file]
-  (= (utils/extract-extension file) ".wsp" ))
-
 (defn- get-paths-from-file
   "Get paths form a file."
   [file]
-  (if (is-whisper? file)
+  (if (utils/is-whisper? file)
     [file]
     (do
       (wlog/info (str "Loading paths from file: " file))
@@ -230,6 +225,13 @@
                   (not= (subs dir 0 (count root-dir-c)) root-dir-c))
           (throw (Exception. (str "Invalid root directory: " root-dir))))
         root-dir-c))))
+
+(defn- get-root-dir-and-files
+  [source options]
+  (if (or (utils/is-directory? source) (utils/is-whisper? source))
+    [(get-root-dir source options) (get-paths source)]
+    (let [files (get-paths source)]
+      [(get-root-dir (first files) options) files])))
 
 (defn- create-mstore
   "Create a metric store."
@@ -337,8 +339,7 @@
   (wlog/set-logging! options)
   (try
     (wlog/info start-title)
-    (let [root-dir (get-root-dir source options)
-          files (get-paths source)
+    (let [[root-dir files] (get-root-dir-and-files source options)
           files-count (count files)
           {:keys [from to]} (get-from-to options)
           jobs (:jobs options default-jobs)

@@ -5,6 +5,7 @@
             [whisper2cyanite.metric-store :as mstore]
             [whisper2cyanite.path-store :as pstore]
             [whisper2cyanite.core :as core]
+            [whisper2cyanite.utils :as utils]
             [org.spootnik.logconfig :as logconfig])
   (:gen-class))
 
@@ -31,8 +32,8 @@
         ""
         "Usage: "
         "  whisper2cyanite [options] migrate <directory | whisper file | filelist file> <tenant> <cassandra-host,...> <elasticsearch-url>"
-        "  whisper2cyanite [options] validate <directory | file> <tenant> <cassandra-host,...> <elasticsearch-url>"
-        "  whisper2cyanite [options] calc-size <directory | file> <tenant>"
+        "  whisper2cyanite [options] validate <directory | whisper file | filelist file> <tenant> <cassandra-host,...> <elasticsearch-url>"
+        "  whisper2cyanite [options] calc-size <directory | whisper file | filelist file> <tenant>"
         "  whisper2cyanite list-files <directory>"
         "  whisper2cyanite list-paths <directory>"
         "  whisper2cyanite info <file>"
@@ -72,6 +73,12 @@
                [(format "Option \"--%s\" conflicts with the command \"%s\""
                         (name option) command)])))))
 
+(defn- check-source
+  [source options]
+  (when (and (utils/is-file? source) (not (:root-dir options nil)))
+    (exit 1 (error-msg
+             ["For file source you must pass the \"--root-dir\" option"]))))
+
 (defn- prepare-common-args
   "Prepare common arguments."
   [arguments options]
@@ -102,6 +109,7 @@
                  options)
   (let [{:keys [source tenant cass-hosts es-url
                 options]} (prepare-common-args arguments options)]
+    (check-source source options)
     (core/migrate source tenant cass-hosts es-url options)))
 
 (defn- run-validate
@@ -117,6 +125,7 @@
                  options)
   (let [{:keys [source tenant cass-hosts es-url
                 options]} (prepare-common-args arguments options)]
+    (check-source source options)
     (core/validate source tenant cass-hosts es-url options)))
 
 (defn- run-calc-size

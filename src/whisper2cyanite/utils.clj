@@ -18,6 +18,11 @@
   [path]
   (.getCanonicalPath (io/file path)))
 
+(defn is-file?
+  "Is path a file?"
+  [path]
+  (.isFile (io/file path)))
+
 (defn is-directory?
   "Is path a directory?"
   [path]
@@ -32,7 +37,8 @@
 (defn extract-extension
   "Extract a file extension from a path."
   [path]
-  (if-let [ext (re-find #"\..*$" (extract-file path))] ext ""))
+  (if (is-file? path)
+    (if-let [ext (re-find #"\..*$" (extract-file path))] ext "") ""))
 
 (defn extract-directory
   "Extract a directory from a path."
@@ -40,3 +46,8 @@
   (if (is-directory? path)
     path
     (.getParent (io/file path))))
+
+(defn is-whisper?
+  "Is the file a Whisper database?"
+  [path]
+  (= (extract-extension path) ".wsp"))
