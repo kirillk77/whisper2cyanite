@@ -13,11 +13,13 @@ whisper2cyanite is a tool for migrating data from
   * [Building a Standalone JAR-file](#building-a-standalone-jar-file)
   * [Building a Deb-package](#building-a-deb-package)
 * [Usage](#usage)
-  * [Terms](#terms)
-  * [Short Help](#short-help)
+  * [Quick Help](#quick-help)
+  * [Arguments](#arguments)
   * [Commands](#commands)
   * [Options](#options)
 * [Usage Scenarios](#usage-scenarios)
+  * [Migrating](#Migrating)
+  * [Validating](#Validating)
 * [License](#license)
 * [Thanks](#thanks)
 
@@ -51,9 +53,9 @@ Built package will be placed in the `target` directory.
 
 ## Usage
 
-### Terms
+### Quick Help
 
-### Short Help
+### Arguments
 
 ### Commands
 
