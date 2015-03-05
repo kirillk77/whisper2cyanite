@@ -9,6 +9,7 @@ whisper2cyanite is a tool for migrating data from
 ## Table of Contents
 
 * [Building](#building)
+** [Dependencies](#dependencies)
 * [Usage](#usage)
 * [Usage scenarios](#usage-scenarios)
 
@@ -20,7 +21,7 @@ whisper2cyanite is a [Clojure](http://clojure.org/) application and uses
 [Leiningen](http://leiningen.org/) as build tool. Building whisper2cyanite
 needs a working Leiningen installation, as well as JDK.
 
-### Building a standalone JAR-file
+### Building a Standalone JAR-file
 
 ```bash
 lein uberjar
@@ -29,7 +30,7 @@ lein uberjar
 Built JAR-file will be placed in the `target/uberjar` directory. You can launch
 the tool by running `./whisper2cyanite` command.
 
-### Building a deb-package
+### Building a Deb-package
 
 Building whisper2cyanite deb-package needs installed `dpkg-dev` and `fakeroot`
 packages.
@@ -44,7 +45,7 @@ Built package will be placed in the `target` directory.
 
 ### Terms
 
-### Short help
+### Short Help
 
 ### Commands
 
@@ -257,11 +258,11 @@ Stop on the first non-fatal error.
 
 Disable the progress bar.
 
-## Usage scenarios
+## Usage Scenarios
 
-### Migrating a database
+### Migrating a Database
 
-#### Migrating a whole database
+#### Migrating a Whole Database
 
 Typical command for migrating a whole Whisper database to Cyanite looks like
 this:
@@ -288,7 +289,7 @@ This command means:
 * Use two Cassandra nodes: `cass1.example.org` and `cass2.example.org`
 * Use the Elasticsearch node on `http://es.example.org:9200`
 
-#### Retrying to migrate after non-fatal errors occurred
+#### Retrying to Migrate After Non-fatal Errors Occurred
 
 ```bash
 whisper2cyanite --run --jobs 8 --rollups 60:5356800,900:6220800 --min-ttl 18000 \
@@ -301,7 +302,7 @@ This command means same as above but:
 * Set database root to the `/var/lib/whisper/` directory
 * Read files to migrate from the `errorfiles.lst` file
 
-#### Migrating paths from a database subtree
+#### Migrating Paths Taken From a Database Subtree
 
 Dumping names of Whisper database files to the `path-files.lst` file:
 
@@ -320,7 +321,7 @@ whisper2cyanite --run --jobs 8 --disable-metric-store --root-dir \
   http://es.example.org:9200
 ```
 
-#### Migrating metrics for a predetermined period and a single rollup from a database file
+#### Migrating Metrics For a Predetermined Period and a Single Rollup From a Database File
 
 Migrating metrics from the `/var/lib/whisper/requests/nginx/access.wsp` file
 for period from `1420070400` (01 Jan 2015 00:00:00) until `1421280000` (15 Jan
@@ -338,7 +339,7 @@ whisper2cyanite --run --rollups 60:5356800 --disable-path-store \
 
 Using the command `validate` is very similar to using the command `migrate`.
 
-#### Validating a whole database
+#### Validating a Whole Database
 
 Typical command for validating a whole database:
 
@@ -348,7 +349,7 @@ whisper2cyanite --jobs 8 --cassandra-options "{:compression :lz4}" \
   cass1.example.org,cass2.example.org http://es.example.org:9200
 ```
 
-#### Validating paths from a database subtree
+#### Validating Paths Taken From a Database Subtree
 
 Validating paths from the `/var/lib/whisper/requests/nginx` directory (the
 `requests.nginx.*` path store subtree):
@@ -359,7 +360,7 @@ whisper2cyanite --jobs 8 --disable-metric-store --root-dir /var/lib/whisper/ \
   http://es.example.org:9200
 ```
 
-#### Validating metrics of a single path
+#### Validating Metrics of a Single Path
 
 Validating metrics from the `/var/lib/whisper/requests/nginx/access.wsp` file:
 
