@@ -36,6 +36,8 @@ Built package will be placed in the `target` directory.
 
 ## Usage
 
+### Short help
+
 ### Commands
 
 #### `migrate`
@@ -52,8 +54,8 @@ Available options: `from`, `to`, `run`, `rollups`, `jobs`, `min-ttl`,
 
 #### `validate`
 
-Validate a metric store, a path store or both comparing points and paths from a
-Whisper database and Cyanite storages.
+Validate a metric store, a path store or both, comparing points and paths from
+a Whisper database and Cyanite storages.
 
 Arguments: `source`, `tenant`, `cassandra-host(s)`, `elasticsearch-url`.
 
@@ -72,13 +74,14 @@ Available options: `rollups`, `jobs`, `root-dir`, `disable-progress`.
 
 #### `list-files`
 
-List files.
+List Whisper database files taken from a `source`.
 
 Arguments: `source`.
 
 #### `list-paths`
 
-List paths.
+List paths taken from a `source`. The `root-dir` option can be passed to have
+correct paths being computed from filenames.
 
 Arguments: `source`.
 
@@ -108,115 +111,143 @@ Show help.
 
 `-f`, `--from` `FROM`
 
-From time (Unix epoch)
+Set from time in the Unix (POSIX, epoch) time format.
+
+Example: 1420070400
 
 #### `to`
 
 `-t`, `--to` `TO`
 
-To time (Unix epoch)
+Set until time in the Unix (POSIX, epoch) time format.
+
+Example: 1421280000
 
 #### `run`
 
 `-r`, `--run`
 
-Force normal run (dry run using on default)
+Force a normal run. *Dry run using on default*.
 
 #### `rollups`
 
 `-R`, `--rollups` `ROLLUPS`
 
-Define rollups. Format: <seconds_per_point[:retention],...> Example: 60,300:31536000
+Define rollups.
+
+Format: <seconds_per_point[:retention],...>
+
+Example: 60,300:31536000
 
 #### `jobs`
 
 `-j`, `--jobs` `JOBS`
 
-Number of jobs to run simultaneously
+Set the number of jobs to run simultaneously.
 
 #### `min-ttl`
 
 `-T`, `--min-ttl` `TTL`
 
-Minimal TTL. Default: 3600
+Set the minimal TTL. Points having calculated TTL values below the minimal TTL
+will not be migrated. It is useful to reduce the number of migrated points.
+
+Default: 3600
 
 #### `root-dir`
 
 `-D`, `--root-dir` `DIRECTORY`
 
-Root directory
+Set the root directory.
 
 #### `cassandra-keyspace`
 
 `--cassandra-keyspace` `KEYSPACE`
 
-Cassandra keyspace. Default: metric
+Set the Cassandra keyspace.
+
+Default: metric
 
 #### `cassandra-options`
 
 `-O`, `--cassandra-options` `OPTIONS`
 
-Cassandra options. Example: "{:compression :lz4}"
+Set Cassandra options.
+
+Example: "{:compression :lz4}"
 
 #### `cassandra-channel-size`
 
 `--cassandra-channel-size` `SIZE`
 
-Cassandra channel size. Default: 10000
+Set the Cassandra channel size.
+
+Default: 10000
 
 #### `disable-metric-store`
 
 `--disable-metric-store`
 
-Disable writing to metric store
+Disable writing to the metric store
 
 #### `elasticsearch-index`
 
 `--elasticsearch-index` `INDEX`
 
-Elasticsearch index. Default: cyanite_paths
+Set the Elasticsearch index.
+
+Default: cyanite_paths
 
 #### `elasticsearch-channel-size`
 
 `--elasticsearch-channel-size` `SIZE`
 
-Elasticsearch channel size. Default: 10000
+Set the Elasticsearch channel size.
+
+Default: 10000
 
 #### `disable-path-store`
 
 `--disable-path-store`
 
-Disable writing to path store
+Disable writing to the path store
 
 #### `log-file`
 
 `-l`, `--log-file` `FILE`
 
-Log file. Default: whisper2cyanite.log
+Set the log file.
+
+Default: whisper2cyanite.log
 
 #### `log-level`
 
 `-L`, `--log-level` `LEVEL`
 
-Log level (all, trace, debug, info, warn, error, fatal, off). Default: info
+Set the Log level.
+
+Available log levels: `all`, `trace`, `debug`, `info`, `warn`, `error`,
+`fatal`, `off`.
+
+Default: `info`
 
 #### `errors-file`
 
 `-e`, `--errors-file` `FILE`
 
-Dump a list of files during processing which the errors occurred
+Dump a list of files during processing which the errors occurred.
 
 #### `stop-on-error`
 
 `-S`, `--stop-on-error`
 
-Stop on first non-fatal error
+Stop on the first non-fatal error.
 
 #### `disable-progress`
 
 `-P`, `--disable-progress`
 
-Disable progress bar
+Disable the progress bar.
 
 ## Usage scenarios
 
