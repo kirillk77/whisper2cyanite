@@ -1,10 +1,16 @@
 # whisper2cyanite
 
+[![Build Status](https://travis-ci.org/cybem/whisper2cyanite.svg?branch=master)](https://travis-ci.org/cybem/whisper2cyanite)
+
 whisper2cyanite is a tool for migrating data from
 [Whisper](https://github.com/graphite-project/whisper) to
 [Cyanite](https://github.com/pyr/cyanite).
 
-[![Build Status](https://travis-ci.org/cybem/whisper2cyanite.svg?branch=master)](https://travis-ci.org/cybem/whisper2cyanite)
+## Table of Contents
+
+* [Building](#building)
+* [Usage](#usage)
+* [Usage scenarios](#usage-scenarios)
 
 ## Building
 
@@ -35,6 +41,8 @@ lein fatdeb
 Built package will be placed in the `target` directory.
 
 ## Usage
+
+### Terms
 
 ### Short help
 
@@ -127,7 +135,7 @@ Example: 1421280000
 
 `-r`, `--run`
 
-Force a normal run. *Dry run using on default*.
+Force a normal run. **Dry run using on default**.
 
 #### `rollups`
 
