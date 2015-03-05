@@ -35,7 +35,7 @@
         "  whisper2cyanite [options] validate <directory | whisper file | filelist file> <tenant> <cassandra-host,...> <elasticsearch-url>"
         "  whisper2cyanite [options] calc-size <directory | whisper file | filelist file> <tenant>"
         "  whisper2cyanite list-files <directory>"
-        "  whisper2cyanite list-paths <directory>"
+        "  whisper2cyanite [options] list-paths <directory>"
         "  whisper2cyanite info <file>"
         "  whisper2cyanite [options] fetch <file> <rollup>"
         "  whisper2cyanite help"
@@ -148,8 +148,10 @@
   "Run command 'list-paths'."
   [command arguments options summary]
   (check-arguments command arguments 1 1)
-  (check-options command #{} options)
-  (core/list-paths (first arguments)))
+  (check-options command #{:root-dir} options)
+  (let [source (first arguments)]
+    (check-source source options)
+    (core/list-paths source options)))
 
 (defn- run-info
   "Run command 'info'."

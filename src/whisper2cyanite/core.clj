@@ -417,9 +417,10 @@
 
 (defn list-paths
   "List paths."
-  [dir]
-  (doseq [path (sort (whisper/get-paths dir))]
-    (println (whisper/file-to-name path dir))))
+  [source options]
+  (let [[root-dir files] (get-root-dir-and-files source options)]
+    (doseq [file (sort files)]
+      (println (whisper/file-to-name file root-dir)))))
 
 (defn show-info
   "Show path info."
