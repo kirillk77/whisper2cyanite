@@ -104,79 +104,117 @@ Show help.
 
 ### Options
 
-#### `-f`, `--from` `FROM`
+#### from
+
+`-f`, `--from` `FROM`
 
 From time (Unix epoch)
 
-#### `-t`, `--to` `TO`
+#### to
+
+`-t`, `--to` `TO`
 
 To time (Unix epoch)
 
-#### `-r`, `--run`
+#### run
+
+`-r`, `--run`
 
 Force normal run (dry run using on default)
 
-#### `-R`, `--rollups` `ROLLUPS`
+#### rollups
+
+`-R`, `--rollups` `ROLLUPS`
 
 Define rollups. Format: <seconds_per_point[:retention],...> Example: 60,300:31536000
 
-#### `-j`, `--jobs` `JOBS`
+#### jobs
+
+`-j`, `--jobs` `JOBS`
 
 Number of jobs to run simultaneously
 
-#### `-T`, `--min-ttl` `TTL`
+#### min-ttl
+
+`-T`, `--min-ttl` `TTL`
 
 Minimal TTL. Default: 3600
 
-#### `-D`, `--root-dir` `DIRECTORY`
+#### root-dir
+
+`-D`, `--root-dir` `DIRECTORY`
 
 Root directory
 
-#### `--cassandra-keyspace` `KEYSPACE`
+#### cassandra-keyspace
+
+`--cassandra-keyspace` `KEYSPACE`
 
 Cassandra keyspace. Default: metric
 
-#### `-O`, `--cassandra-options` `OPTIONS`
+#### cassandra-options
+
+`-O`, `--cassandra-options` `OPTIONS`
 
 Cassandra options. Example: "{:compression :lz4}"
 
-#### `--cassandra-channel-size` `SIZE`
+#### cassandra-channel-size
+
+`--cassandra-channel-size` `SIZE`
 
 Cassandra channel size. Default: 10000
 
-#### `--disable-metric-store`
+#### disable-metric-store
+
+`--disable-metric-store`
 
 Disable writing to metric store
 
-#### `--elasticsearch-index` `INDEX`
+#### elasticsearch-index
+
+`--elasticsearch-index` `INDEX`
 
 Elasticsearch index. Default: cyanite_paths
 
-#### `--elasticsearch-channel-size` `SIZE`
+#### elasticsearch-channel-size
+
+`--elasticsearch-channel-size` `SIZE`
 
 Elasticsearch channel size. Default: 10000
 
-#### `--disable-path-store`
+#### disable-path-store
+
+`--disable-path-store`
 
 Disable writing to path store
 
-#### `-l`, `--log-file` `FILE`
+#### log-file
+
+`-l`, `--log-file` `FILE`
 
 Log file. Default: whisper2cyanite.log
 
-#### `-L`, `--log-level` `LEVEL`
+#### log-level
+
+`-L`, `--log-level` `LEVEL`
 
 Log level (all, trace, debug, info, warn, error, fatal, off). Default: info
 
-#### `-e`, `--errors-file` `FILE`
+#### errors-file
+
+`-e`, `--errors-file` `FILE`
 
 Dump a list of files during processing which the errors occurred
 
-#### `-S`, `--stop-on-error`
+#### stop-on-error
+
+`-S`, `--stop-on-error`
 
 Stop on first non-fatal error
 
-#### `-P`, `--disable-progress`
+#### disable-progress
+
+`-P`, `--disable-progress`
 
 Disable progress bar
 
