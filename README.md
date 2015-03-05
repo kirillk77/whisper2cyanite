@@ -38,147 +38,147 @@ Built package will be placed in the `target` directory.
 
 ### Commands
 
-* `migrate`
+#### `migrate`
 
-  Migrate a Whisper database to a metric store, a path store or both.
+Migrate a Whisper database to a metric store, a path store or both.
 
-  Arguments: `source`, `tenant`, `cassandra-host(s)`, `elasticsearch-url`.
+Arguments: `source`, `tenant`, `cassandra-host(s)`, `elasticsearch-url`.
 
-  Available options: `from`, `to`, `run`, `rollups`, `jobs`, `min-ttl`,
-  `root-dir`, `cassandra-keyspace`, `cassandra-options`,
-  `cassandra-channel-size`, `disable-metric-store`, `elasticsearch-index`,
-  `elasticsearch-channel-size`, `disable-path-store`, `log-file` `log-level`,
-  `disable-log`, `errors-file`, `stop-on-error`, `disable-progress`.
+Available options: `from`, `to`, `run`, `rollups`, `jobs`, `min-ttl`,
+`root-dir`, `cassandra-keyspace`, `cassandra-options`,
+`cassandra-channel-size`, `disable-metric-store`, `elasticsearch-index`,
+`elasticsearch-channel-size`, `disable-path-store`, `log-file` `log-level`,
+`disable-log`, `errors-file`, `stop-on-error`, `disable-progress`.
 
-* `validate`
+#### `validate`
 
-  Validate a metric store, a path store or both comparing points and paths from
-  a Whisper database and Cyanite storages.
+Validate a metric store, a path store or both comparing points and paths from a
+Whisper database and Cyanite storages.
 
-  Arguments: `source`, `tenant`, `cassandra-host(s)`, `elasticsearch-url`.
+Arguments: `source`, `tenant`, `cassandra-host(s)`, `elasticsearch-url`.
 
-  Available options: `from`, `to`, `rollups`, `jobs`, `min-ttl`, `root-dir`,
-  `cassandra-keyspace`, `cassandra-options`, `disable-metric-store`,
-  `elasticsearch-index`, `disable-path-store`, `log-file` `log-level`,
-  `disable-log`, `errors-file`, `stop-on-error`, `disable-progress`.
+Available options: `from`, `to`, `rollups`, `jobs`, `min-ttl`, `root-dir`,
+`cassandra-keyspace`, `cassandra-options`, `disable-metric-store`,
+`elasticsearch-index`, `disable-path-store`, `log-file` `log-level`,
+`disable-log`, `errors-file`, `stop-on-error`, `disable-progress`.
 
-* `calc-size`
+#### `calc-size`
 
-  Calculate Cassandra data size from a Whisper database.
+Calculate Cassandra data size from a Whisper database.
 
-  Arguments: `source`, `tenant`.
+Arguments: `source`, `tenant`.
 
-  Available options: `rollups`, `jobs`, `root-dir`, `disable-progress`.
+Available options: `rollups`, `jobs`, `root-dir`, `disable-progress`.
 
-* `list-files`
+#### `list-files`
 
-  List files.
+List files.
 
-  Arguments: `source`.
+Arguments: `source`.
 
-* `list-paths`
+#### `list-paths`
 
-  List paths.
+List paths.
 
-  Arguments: `source`.
+Arguments: `source`.
 
-  Available options: `root-dir`.
+Available options: `root-dir`.
 
-* `info`
+#### `info`
 
-  Arguments: `wsp-file`.
+Arguments: `wsp-file`.
 
-  Show Whisper database file information.
+Show Whisper database file information.
 
-* `fetch`
+#### `fetch`
 
-  Fetch metrics from a Whisper database file.
+Fetch metrics from a Whisper database file.
 
-  Arguments: `wsp-file`.
+Arguments: `wsp-file`.
 
-  Available options: `from`, `to`.
+Available options: `from`, `to`.
 
-* `help`
+#### `help`
 
-  Show help.
+Show help.
 
 ### Options
 
-* `-f`, `--from` `FROM`
+#### `-f`, `--from` `FROM`
 
-  From time (Unix epoch)
+From time (Unix epoch)
 
-* `-t`, `--to` `TO`
+#### `-t`, `--to` `TO`
 
-  To time (Unix epoch)
+To time (Unix epoch)
 
-* `-r`, `--run`
+#### `-r`, `--run`
 
-  Force normal run (dry run using on default)
+Force normal run (dry run using on default)
 
-* `-R`, `--rollups` `ROLLUPS`
+#### `-R`, `--rollups` `ROLLUPS`
 
-  Define rollups. Format: <seconds_per_point[:retention],...> Example: 60,300:31536000
+Define rollups. Format: <seconds_per_point[:retention],...> Example: 60,300:31536000
 
-* `-j`, `--jobs` `JOBS`
+#### `-j`, `--jobs` `JOBS`
 
-  Number of jobs to run simultaneously
+Number of jobs to run simultaneously
 
-* `-T`, `--min-ttl` `TTL`
+#### `-T`, `--min-ttl` `TTL`
 
-  Minimal TTL. Default: 3600
+Minimal TTL. Default: 3600
 
-* `-D`, `--root-dir` `DIRECTORY`
+#### `-D`, `--root-dir` `DIRECTORY`
 
-  Root directory
+Root directory
 
-* `--cassandra-keyspace` `KEYSPACE`
+#### `--cassandra-keyspace` `KEYSPACE`
 
-  Cassandra keyspace. Default: metric
+Cassandra keyspace. Default: metric
 
-* `-O`, `--cassandra-options` `OPTIONS`
+#### `-O`, `--cassandra-options` `OPTIONS`
 
-  Cassandra options. Example: "{:compression :lz4}"
+Cassandra options. Example: "{:compression :lz4}"
 
-* `--cassandra-channel-size` `SIZE`
+#### `--cassandra-channel-size` `SIZE`
 
-  Cassandra channel size. Default: 10000
+Cassandra channel size. Default: 10000
 
-* `--disable-metric-store`
+#### `--disable-metric-store`
 
-  Disable writing to metric store
+Disable writing to metric store
 
-* `--elasticsearch-index` `INDEX`
+#### `--elasticsearch-index` `INDEX`
 
-  Elasticsearch index. Default: cyanite_paths
+Elasticsearch index. Default: cyanite_paths
 
-* `--elasticsearch-channel-size` `SIZE`
+#### `--elasticsearch-channel-size` `SIZE`
 
-  Elasticsearch channel size. Default: 10000
+Elasticsearch channel size. Default: 10000
 
-* `--disable-path-store`
+#### `--disable-path-store`
 
-  Disable writing to path store
+Disable writing to path store
 
-* `-l`, `--log-file` `FILE`
+#### `-l`, `--log-file` `FILE`
 
-  Log file. Default: whisper2cyanite.log
+Log file. Default: whisper2cyanite.log
 
-* `-L`, `--log-level` `LEVEL`
+#### `-L`, `--log-level` `LEVEL`
 
-  Log level (all, trace, debug, info, warn, error, fatal, off). Default: info
+Log level (all, trace, debug, info, warn, error, fatal, off). Default: info
 
-* `-e`, `--errors-file` `FILE`
+#### `-e`, `--errors-file` `FILE`
 
-  Dump a list of files during processing which the errors occurred
+Dump a list of files during processing which the errors occurred
 
-* `-S`, `--stop-on-error`
+#### `-S`, `--stop-on-error`
 
-  Stop on first non-fatal error
+Stop on first non-fatal error
 
-* `-P`, `--disable-progress`
+#### `-P`, `--disable-progress`
 
-  Disable progress bar
+Disable progress bar
 
 ## Usage scenarios
 
