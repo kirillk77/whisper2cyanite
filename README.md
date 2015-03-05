@@ -40,33 +40,63 @@ Built package will be placed in the `target` directory.
 
 * `migrate`
 
-  Migrate
+  Migrate a Whisper database to a metric store, a path store or both.
 
+  Arguments: `source`, `tenant`, `cassandra-host(s)`, `elasticsearch-url`.
+
+  Available options: `from`, `to`, `run`, `rollups`, `jobs`, `min-ttl`,
+  `root-dir`, `cassandra-keyspace`, `cassandra-options`,
+  `cassandra-channel-size`, `disable-metric-store`, `elasticsearch-index`,
+  `elasticsearch-channel-size`, `disable-path-store`, `log-file` `log-level`,
+  `disable-log`, `errors-file`, `stop-on-error`, `disable-progress`.
 
 * `validate`
 
-  Validate
+  Validate a metric store, a path store or both comparing points and paths from
+  a Whisper database and Cyanite storages.
 
+  Arguments: `source`, `tenant`, `cassandra-host(s)`, `elasticsearch-url`.
+
+  Available options: `from`, `to`, `rollups`, `jobs`, `min-ttl`, `root-dir`,
+  `cassandra-keyspace`, `cassandra-options`, `disable-metric-store`,
+  `elasticsearch-index`, `disable-path-store`, `log-file` `log-level`,
+  `disable-log`, `errors-file`, `stop-on-error`, `disable-progress`.
+
+* `calc-size`
+
+  Calculate Cassandra data size from a Whisper database.
+
+  Arguments: `source`, `tenant`.
+
+  Available options: `rollups`, `jobs`, `root-dir`, `disable-progress`.
 
 * `list-files`
 
   List files.
 
+  Arguments: `source`.
 
 * `list-paths`
 
   List paths.
 
+  Arguments: `source`.
+
+  Available options: `root-dir`.
 
 * `info`
 
-  Show database info.
+  Arguments: `wsp-file`.
 
+  Show Whisper database file information.
 
 * `fetch`
 
-  Fetch metrics.
+  Fetch metrics from a Whisper database file.
 
+  Arguments: `wsp-file`.
+
+  Available options: `from`, `to`.
 
 * `help`
 
