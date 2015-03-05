@@ -104,115 +104,115 @@ Show help.
 
 ### Options
 
-#### from
+#### `from`
 
 `-f`, `--from` `FROM`
 
 From time (Unix epoch)
 
-#### to
+#### `to`
 
 `-t`, `--to` `TO`
 
 To time (Unix epoch)
 
-#### run
+#### `run`
 
 `-r`, `--run`
 
 Force normal run (dry run using on default)
 
-#### rollups
+#### `rollups`
 
 `-R`, `--rollups` `ROLLUPS`
 
 Define rollups. Format: <seconds_per_point[:retention],...> Example: 60,300:31536000
 
-#### jobs
+#### `jobs`
 
 `-j`, `--jobs` `JOBS`
 
 Number of jobs to run simultaneously
 
-#### min-ttl
+#### `min-ttl`
 
 `-T`, `--min-ttl` `TTL`
 
 Minimal TTL. Default: 3600
 
-#### root-dir
+#### `root-dir`
 
 `-D`, `--root-dir` `DIRECTORY`
 
 Root directory
 
-#### cassandra-keyspace
+#### `cassandra-keyspace`
 
 `--cassandra-keyspace` `KEYSPACE`
 
 Cassandra keyspace. Default: metric
 
-#### cassandra-options
+#### `cassandra-options`
 
 `-O`, `--cassandra-options` `OPTIONS`
 
 Cassandra options. Example: "{:compression :lz4}"
 
-#### cassandra-channel-size
+#### `cassandra-channel-size`
 
 `--cassandra-channel-size` `SIZE`
 
 Cassandra channel size. Default: 10000
 
-#### disable-metric-store
+#### `disable-metric-store`
 
 `--disable-metric-store`
 
 Disable writing to metric store
 
-#### elasticsearch-index
+#### `elasticsearch-index`
 
 `--elasticsearch-index` `INDEX`
 
 Elasticsearch index. Default: cyanite_paths
 
-#### elasticsearch-channel-size
+#### `elasticsearch-channel-size`
 
 `--elasticsearch-channel-size` `SIZE`
 
 Elasticsearch channel size. Default: 10000
 
-#### disable-path-store
+#### `disable-path-store`
 
 `--disable-path-store`
 
 Disable writing to path store
 
-#### log-file
+#### `log-file`
 
 `-l`, `--log-file` `FILE`
 
 Log file. Default: whisper2cyanite.log
 
-#### log-level
+#### `log-level`
 
 `-L`, `--log-level` `LEVEL`
 
 Log level (all, trace, debug, info, warn, error, fatal, off). Default: info
 
-#### errors-file
+#### `errors-file`
 
 `-e`, `--errors-file` `FILE`
 
 Dump a list of files during processing which the errors occurred
 
-#### stop-on-error
+#### `stop-on-error`
 
 `-S`, `--stop-on-error`
 
 Stop on first non-fatal error
 
-#### disable-progress
+#### `disable-progress`
 
 `-P`, `--disable-progress`
 
