@@ -9,13 +9,17 @@ whisper2cyanite is a tool for migrating data from
 ## Table of Contents
 
 * [Building](#building)
-
   * [Dependencies](#dependencies)
   * [Building a Standalone JAR-file](#building-a-standalone-jar-file)
   * [Building a Deb-package](#building-a-deb-package)
-
 * [Usage](#usage)
-* [Usage scenarios](#usage-scenarios)
+  * [Terms](#terms)
+  * [Short Help](#short-help)
+  * [Commands](#commands)
+  * [Options](#options)
+* [Usage Scenarios](#usage-scenarios)
+* [License](#license)
+* [Thanks](#thanks)
 
 ## Building
 
@@ -264,7 +268,7 @@ Disable the progress bar.
 
 ## Usage Scenarios
 
-### Migrating a Database
+### Migrating
 
 #### Migrating a Whole Database
 
