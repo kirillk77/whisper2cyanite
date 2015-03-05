@@ -9,7 +9,11 @@ whisper2cyanite is a tool for migrating data from
 ## Table of Contents
 
 * [Building](#building)
-** [Dependencies](#dependencies)
+
+  * [Dependencies](#dependencies)
+  * [Building a Standalone JAR-file](#building-a-standalone-jar-file)
+  * [Building a Deb-package](#building-a-deb-package)
+
 * [Usage](#usage)
 * [Usage scenarios](#usage-scenarios)
 
