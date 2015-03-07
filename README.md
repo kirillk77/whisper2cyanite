@@ -92,11 +92,25 @@ Migrate a Whisper database to a metric store, a path store or both.
 
 Arguments: `source`, `tenant`, `cassandra-host(s)`, `elasticsearch-url`.
 
-Available options: `from`, `to`, `run`, `rollups`, `jobs`, `min-ttl`,
-`root-dir`, `cassandra-keyspace`, `cassandra-options`,
-`cassandra-channel-size`, `disable-metric-store`, `elasticsearch-index`,
-`elasticsearch-channel-size`, `disable-path-store`, `log-file` `log-level`,
-`disable-log`, `errors-file`, `stop-on-error`, `disable-progress`.
+Available options: [`from`](#from),
+[`to`](#to), [`run`](#run),
+[`rollups`](#rollups),
+[`jobs`](#jobs),
+[`min-ttl`](#min-ttl),
+[`root-dir`](#root-dir),
+[`cassandra-keyspace`](#cassandra-keyspace),
+[`cassandra-options`](#cassandra-options),
+[`cassandra-channel-size`](#cassandra-channel-size),
+[`disable-metric-store`](#disable-metric-store),
+[`elasticsearch-index`](#elasticsearch-index),
+[`elasticsearch-channel-size`](#elasticsearch-channel-size),
+[`disable-path-store`](#disable-path-store),
+[`log-file`](#log-file),
+[`log-level`](#log-level),
+[`disable-log`](#disable-log),
+[`errors-file`](#errors-file),
+[`stop-on-error`](#stop-on-error),
+[`disable-progress`](#disable-progress).
 
 #### `validate`
 
@@ -135,7 +149,8 @@ correct paths being computed from filenames.
 
 Arguments: `source`.
 
-Available options: `root-dir`.
+Available options:
+[`root-dir`](#root-dir).
 
 #### `info`
 
@@ -149,7 +164,8 @@ Fetch timeseries from a Whisper database file.
 
 Arguments: `wsp-file`.
 
-Available options: `from`, `to`.
+Available options: [`from`](#from),
+[`to`](#to).
 
 #### `help`
 
