@@ -116,7 +116,11 @@ Calculate Cassandra data size from a Whisper database.
 
 Arguments: `source`, `tenant`.
 
-Available options: [`rollups`](#rollups), `jobs`, `root-dir`, `disable-progress`.
+Available options:
+[`rollups`](#rollups),
+[`jobs`](#jobs),
+[`root-dir`](#root-dir),
+[`disable-progress`](#disable-progress).
 
 #### `list-files`
 
