@@ -16,10 +16,37 @@ whisper2cyanite is a tool for migrating data from
   * [Quick Help](#quick-help)
   * [Arguments](#arguments)
   * [Commands](#commands)
+    * [migrate](#migrate)
+    * [validate](#validate)
+    * [calc-size](#calc-size)
+    * [list-files](#list-files)
+    * [list-paths](#list-paths)
+    * [info](#info)
+    * [fetch](#fetch)
+    * [help](#help)
   * [Options](#options)
+    * [cassandra-channel-size](#cassandra-channel-size)
+    * [cassandra-keyspace](#cassandra-keyspace)
+    * [cassandra-options](#cassandra-options)
+    * [disable-metric-store](#disable-metric-store)
+    * [disable-path-store](#disable-path-store)
+    * [disable-progress](#disable-progress)
+    * [elasticsearch-channel-size](#elasticsearch-channel-size)
+    * [elasticsearch-index](#elasticsearch-index)
+    * [errors-file](#errors-file)
+    * [from](#from)
+    * [jobs](#jobs)
+    * [log-file](#log-file)
+    * [log-level](#log-level)
+    * [min-ttl](#min-ttl)
+    * [rollups](#rollups)
+    * [root-dir](#root-dir)
+    * [run](#run)
+    * [stop-on-error](#stop-on-error)
+    * [to](#to)
 * [Usage Scenarios](#usage-scenarios)
-  * [Migrating](#Migrating)
-  * [Validating](#Validating)
+  * [Migrating](#migrating)
+  * [Validating](#validating)
 * [License](#license)
 * [Thanks](#thanks)
 
@@ -114,7 +141,7 @@ Show Whisper database file information.
 
 #### `fetch`
 
-Fetch metrics from a Whisper database file.
+Fetch timeseries from a Whisper database file.
 
 Arguments: `wsp-file`.
 
