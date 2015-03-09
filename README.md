@@ -92,25 +92,27 @@ Migrate a Whisper database to a metric store, a path store or both.
 
 Arguments: `source`, `tenant`, `cassandra-host(s)`, `elasticsearch-url`.
 
-Available options: [`from`](#from),
-[`to`](#to), [`run`](#run),
-[`rollups`](#rollups),
-[`jobs`](#jobs),
-[`min-ttl`](#min-ttl),
-[`root-dir`](#root-dir),
+Available options:
+[`cassandra-channel-size`](#cassandra-channel-size),
 [`cassandra-keyspace`](#cassandra-keyspace),
 [`cassandra-options`](#cassandra-options),
-[`cassandra-channel-size`](#cassandra-channel-size),
+[`from`](#from),
+[`jobs`](#jobs),
+[`disable-log`](#disable-log),
 [`disable-metric-store`](#disable-metric-store),
-[`elasticsearch-index`](#elasticsearch-index),
-[`elasticsearch-channel-size`](#elasticsearch-channel-size),
 [`disable-path-store`](#disable-path-store),
+[`disable-progress`](#disable-progress),
+[`elasticsearch-channel-size`](#elasticsearch-channel-size),
+[`elasticsearch-index`](#elasticsearch-index),
+[`errors-file`](#errors-file),
 [`log-file`](#log-file),
 [`log-level`](#log-level),
-[`disable-log`](#disable-log),
-[`errors-file`](#errors-file),
-[`stop-on-error`](#stop-on-error),
-[`disable-progress`](#disable-progress).
+[`min-ttl`](#min-ttl),
+[`rollups`](#rollups),
+[`root-dir`](#root-dir),
+[`run`](#run),
+[`to`](#to),
+[`stop-on-error`](#stop-on-error).
 
 #### `validate`
 
