@@ -173,7 +173,8 @@ Show help.
 
 `-f`, `--from` `FROM`
 
-Set from time in the Unix (POSIX, epoch) time format.
+Set from time in the
+[Unix (POSIX, epoch) time format](https://en.wikipedia.org/wiki/Unix_time).
 
 Example: 1420070400
 
@@ -181,7 +182,8 @@ Example: 1420070400
 
 `-t`, `--to` `TO`
 
-Set until time in the Unix (POSIX, epoch) time format.
+Set until time in the
+[Unix (POSIX, epoch) time format](https://en.wikipedia.org/wiki/Unix_time).
 
 Example: 1421280000
 
@@ -214,7 +216,7 @@ Set the number of jobs to run simultaneously.
 Set the minimal TTL. Points having calculated TTL values below the minimal TTL
 will not be migrated. It is useful to reduce the number of migrated points.
 
-Default: 3600
+Default: `3600`
 
 #### `root-dir`
 
@@ -228,7 +230,7 @@ Set the root directory.
 
 Set the Cassandra keyspace.
 
-Default: metric
+Default: `metric`
 
 #### `cassandra-options`
 
@@ -244,7 +246,7 @@ Example: "{:compression :lz4}"
 
 Set the Cassandra channel size.
 
-Default: 10000
+Default: `10000`
 
 #### `disable-metric-store`
 
@@ -258,7 +260,7 @@ Disable writing to the metric store
 
 Set the Elasticsearch index.
 
-Default: cyanite_paths
+Default: `cyanite_paths`
 
 #### `elasticsearch-channel-size`
 
@@ -266,7 +268,7 @@ Default: cyanite_paths
 
 Set the Elasticsearch channel size.
 
-Default: 10000
+Default: `10000`
 
 #### `disable-path-store`
 
@@ -280,7 +282,7 @@ Disable writing to the path store
 
 Set the log file.
 
-Default: whisper2cyanite.log
+Default: `whisper2cyanite.log`
 
 #### `log-level`
 
