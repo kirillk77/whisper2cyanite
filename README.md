@@ -21,7 +21,12 @@ whisper2cyanite is a tool for migrating data from
   * [Migrating](#migrating)
     * [Migrating a Whole Database](#migrating-a-whole-database)
     * [Retrying to Migrate After Non-fatal Errors Occurred](#retrying-to-migrate-after-non-fatal-errors-occurred)
+    * [Migrating Paths Taken From a Database Subtree](#migrating-paths-taken-from-a-database-subtree)
+    * [Migrating Metrics For a Predetermined Period and a Single Rollup From a Database File](#migrating-metrics-for-a-predetermined-period-and-a-single-rollup-from-a-database-file)
   * [Validating](#validating)
+    * [Validating a Whole Database](#validating-a-whole-database)
+    * [Validating Paths Taken From a Database Subtree](#validating-paths-taken-from-a-database-subtree)
+    * [Validating Metrics of a Single Path](#validating-metrics-of-a-single-path)
 * [License](#license)
 * [Thanks](#thanks)
 
