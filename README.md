@@ -176,60 +176,13 @@ Show help.
 * [stop-on-error](#stop-on-error)
 * [to](#to)
 
-#### `from`
+#### `cassandra-channel-size`
 
-`-f`, `--from` `FROM`
+`--cassandra-channel-size` `SIZE`
 
-Set from time in the
-[Unix (POSIX, epoch) time](https://en.wikipedia.org/wiki/Unix_time) format.
+Set the Cassandra channel size.
 
-Example: 1420070400
-
-#### `to`
-
-`-t`, `--to` `TO`
-
-Set until time in the
-[Unix (POSIX, epoch) time](https://en.wikipedia.org/wiki/Unix_time) format.
-
-Example: 1421280000
-
-#### `run`
-
-`-r`, `--run`
-
-Force a normal run. **Dry run using on default**.
-
-#### `rollups`
-
-`-R`, `--rollups` `ROLLUPS`
-
-Define rollups.
-
-Format: <seconds_per_point[:retention],...>
-
-Example: 60,300:31536000
-
-#### `jobs`
-
-`-j`, `--jobs` `JOBS`
-
-Set the number of jobs to run simultaneously.
-
-#### `min-ttl`
-
-`-T`, `--min-ttl` `TTL`
-
-Set the minimal TTL. Points having calculated TTL values below the minimal TTL
-will not be migrated. It is useful to reduce the number of migrated points.
-
-Default: `3600`
-
-#### `root-dir`
-
-`-D`, `--root-dir` `DIRECTORY`
-
-Set the root directory.
+Default: `10000`
 
 #### `cassandra-keyspace`
 
@@ -247,27 +200,23 @@ Set Cassandra options.
 
 Example: "{:compression :lz4}"
 
-#### `cassandra-channel-size`
-
-`--cassandra-channel-size` `SIZE`
-
-Set the Cassandra channel size.
-
-Default: `10000`
-
 #### `disable-metric-store`
 
 `--disable-metric-store`
 
 Disable writing to the metric store
 
-#### `elasticsearch-index`
+#### `disable-path-store`
 
-`--elasticsearch-index` `INDEX`
+`--disable-path-store`
 
-Set the Elasticsearch index.
+Disable writing to the path store
 
-Default: `cyanite_paths`
+#### `disable-progress`
+
+`-P`, `--disable-progress`
+
+Disable the progress bar.
 
 #### `elasticsearch-channel-size`
 
@@ -277,11 +226,34 @@ Set the Elasticsearch channel size.
 
 Default: `10000`
 
-#### `disable-path-store`
+#### `elasticsearch-index`
 
-`--disable-path-store`
+`--elasticsearch-index` `INDEX`
 
-Disable writing to the path store
+Set the Elasticsearch index.
+
+Default: `cyanite_paths`
+
+#### `errors-file`
+
+`-e`, `--errors-file` `FILE`
+
+Dump a list of files during processing which the errors occurred.
+
+#### `from`
+
+`-f`, `--from` `FROM`
+
+Set from time in the
+[Unix (POSIX, epoch) time](https://en.wikipedia.org/wiki/Unix_time) format.
+
+Example: 1420070400
+
+#### `jobs`
+
+`-j`, `--jobs` `JOBS`
+
+Set the number of jobs to run simultaneously.
 
 #### `log-file`
 
@@ -302,23 +274,51 @@ Available log levels: `all`, `trace`, `debug`, `info`, `warn`, `error`,
 
 Default: `info`
 
-#### `errors-file`
+#### `min-ttl`
 
-`-e`, `--errors-file` `FILE`
+`-T`, `--min-ttl` `TTL`
 
-Dump a list of files during processing which the errors occurred.
+Set the minimal TTL. Points having calculated TTL values below the minimal TTL
+will not be migrated. It is useful to reduce the number of migrated points.
+
+Default: `3600`
+
+#### `rollups`
+
+`-R`, `--rollups` `ROLLUPS`
+
+Define rollups.
+
+Format: <seconds_per_point[:retention],...>
+
+Example: 60,300:31536000
+
+#### `root-dir`
+
+`-D`, `--root-dir` `DIRECTORY`
+
+Set the root directory.
+
+#### `run`
+
+`-r`, `--run`
+
+Force a normal run. **Dry run using on default**.
+
+#### `to`
+
+`-t`, `--to` `TO`
+
+Set until time in the
+[Unix (POSIX, epoch) time](https://en.wikipedia.org/wiki/Unix_time) format.
+
+Example: 1421280000
 
 #### `stop-on-error`
 
 `-S`, `--stop-on-error`
 
 Stop on the first non-fatal error.
-
-#### `disable-progress`
-
-`-P`, `--disable-progress`
-
-Disable the progress bar.
 
 ## Usage Scenarios
 
