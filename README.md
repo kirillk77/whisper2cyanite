@@ -96,8 +96,6 @@ Available options:
 [`cassandra-channel-size`](#cassandra-channel-size),
 [`cassandra-keyspace`](#cassandra-keyspace),
 [`cassandra-options`](#cassandra-options),
-[`from`](#from),
-[`jobs`](#jobs),
 [`disable-log`](#disable-log),
 [`disable-metric-store`](#disable-metric-store),
 [`disable-path-store`](#disable-path-store),
@@ -105,6 +103,8 @@ Available options:
 [`elasticsearch-channel-size`](#elasticsearch-channel-size),
 [`elasticsearch-index`](#elasticsearch-index),
 [`errors-file`](#errors-file),
+[`from`](#from),
+[`jobs`](#jobs),
 [`log-file`](#log-file),
 [`log-level`](#log-level),
 [`min-ttl`](#min-ttl),
@@ -121,10 +121,24 @@ a Whisper database and Cyanite storages.
 
 Arguments: `source`, `tenant`, `cassandra-host(s)`, `elasticsearch-url`.
 
-Available options: `from`, `to`, `rollups`, `jobs`, `min-ttl`, `root-dir`,
-`cassandra-keyspace`, `cassandra-options`, `disable-metric-store`,
-`elasticsearch-index`, `disable-path-store`, `log-file` `log-level`,
-`disable-log`, `errors-file`, `stop-on-error`, `disable-progress`.
+Available options:
+[`cassandra-keyspace`](#cassandra-keyspace),
+[`cassandra-options`](#cassandra-options),
+[`disable-log`](#disable-log),
+[`disable-metric-store`](#disable-metric-store),
+[`disable-path-store`](#disable-path-store),
+[`disable-progress`](#disable-progress),
+[`elasticsearch-index`](#elasticsearch-index),
+[`errors-file`](#errors-file),
+[`from`](#from),
+[`jobs`](#jobs),
+[`log-file`](#log-file),
+[`log-level`](#log-level),
+[`min-ttl`](#min-ttl),
+[`rollups`](#rollups),
+[`root-dir`](#root-dir),
+[`to`](#to),
+[`stop-on-error`](#stop-on-error).
 
 #### `calc-size`
 
