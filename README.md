@@ -19,6 +19,8 @@ whisper2cyanite is a tool for migrating data from
   * [Options](#options)
 * [Usage Scenarios](#usage-scenarios)
   * [Migrating](#migrating)
+    * [Migrating a Whole Database](#migrating-a-whole-database)
+    * [Retrying to Migrate After Non-fatal Errors Occurred](#retrying-to-migrate-after-non-fatal-errors-occurred)
   * [Validating](#validating)
 * [License](#license)
 * [Thanks](#thanks)
@@ -174,7 +176,7 @@ Show help.
 `-f`, `--from` `FROM`
 
 Set from time in the
-[Unix (POSIX, epoch) time format](https://en.wikipedia.org/wiki/Unix_time).
+[Unix (POSIX, epoch) time](https://en.wikipedia.org/wiki/Unix_time) format.
 
 Example: 1420070400
 
@@ -183,7 +185,7 @@ Example: 1420070400
 `-t`, `--to` `TO`
 
 Set until time in the
-[Unix (POSIX, epoch) time format](https://en.wikipedia.org/wiki/Unix_time).
+[Unix (POSIX, epoch) time](https://en.wikipedia.org/wiki/Unix_time) format.
 
 Example: 1421280000
 
