@@ -16,34 +16,7 @@ whisper2cyanite is a tool for migrating data from
   * [Quick Help](#quick-help)
   * [Arguments](#arguments)
   * [Commands](#commands)
-    * [migrate](#migrate)
-    * [validate](#validate)
-    * [calc-size](#calc-size)
-    * [list-files](#list-files)
-    * [list-paths](#list-paths)
-    * [info](#info)
-    * [fetch](#fetch)
-    * [help](#help)
   * [Options](#options)
-    * [cassandra-channel-size](#cassandra-channel-size)
-    * [cassandra-keyspace](#cassandra-keyspace)
-    * [cassandra-options](#cassandra-options)
-    * [disable-metric-store](#disable-metric-store)
-    * [disable-path-store](#disable-path-store)
-    * [disable-progress](#disable-progress)
-    * [elasticsearch-channel-size](#elasticsearch-channel-size)
-    * [elasticsearch-index](#elasticsearch-index)
-    * [errors-file](#errors-file)
-    * [from](#from)
-    * [jobs](#jobs)
-    * [log-file](#log-file)
-    * [log-level](#log-level)
-    * [min-ttl](#min-ttl)
-    * [rollups](#rollups)
-    * [root-dir](#root-dir)
-    * [run](#run)
-    * [stop-on-error](#stop-on-error)
-    * [to](#to)
 * [Usage Scenarios](#usage-scenarios)
   * [Migrating](#migrating)
   * [Validating](#validating)
@@ -86,32 +59,32 @@ Built package will be placed in the `target` directory.
 
 ### Commands
 
+* [migrate](#migrate)
+* [validate](#validate)
+* [calc-size](#calc-size)
+* [list-files](#list-files)
+* [list-paths](#list-paths)
+* [info](#info)
+* [fetch](#fetch)
+* [help](#help)
+
 #### `migrate`
 
 Migrate a Whisper database to a metric store, a path store or both.
 
 Arguments: `source`, `tenant`, `cassandra-host(s)`, `elasticsearch-url`.
 
-Available options:
-[`cassandra-channel-size`](#cassandra-channel-size),
+Available options: [`cassandra-channel-size`](#cassandra-channel-size),
 [`cassandra-keyspace`](#cassandra-keyspace),
-[`cassandra-options`](#cassandra-options),
-[`disable-log`](#disable-log),
+[`cassandra-options`](#cassandra-options), [`disable-log`](#disable-log),
 [`disable-metric-store`](#disable-metric-store),
 [`disable-path-store`](#disable-path-store),
 [`disable-progress`](#disable-progress),
 [`elasticsearch-channel-size`](#elasticsearch-channel-size),
-[`elasticsearch-index`](#elasticsearch-index),
-[`errors-file`](#errors-file),
-[`from`](#from),
-[`jobs`](#jobs),
-[`log-file`](#log-file),
-[`log-level`](#log-level),
-[`min-ttl`](#min-ttl),
-[`rollups`](#rollups),
-[`root-dir`](#root-dir),
-[`run`](#run),
-[`to`](#to),
+[`elasticsearch-index`](#elasticsearch-index), [`errors-file`](#errors-file),
+[`from`](#from), [`jobs`](#jobs), [`log-file`](#log-file),
+[`log-level`](#log-level), [`min-ttl`](#min-ttl), [`rollups`](#rollups),
+[`root-dir`](#root-dir), [`run`](#run), [`to`](#to),
 [`stop-on-error`](#stop-on-error).
 
 #### `validate`
@@ -121,24 +94,15 @@ a Whisper database and Cyanite storages.
 
 Arguments: `source`, `tenant`, `cassandra-host(s)`, `elasticsearch-url`.
 
-Available options:
-[`cassandra-keyspace`](#cassandra-keyspace),
-[`cassandra-options`](#cassandra-options),
-[`disable-log`](#disable-log),
+Available options: [`cassandra-keyspace`](#cassandra-keyspace),
+[`cassandra-options`](#cassandra-options), [`disable-log`](#disable-log),
 [`disable-metric-store`](#disable-metric-store),
 [`disable-path-store`](#disable-path-store),
 [`disable-progress`](#disable-progress),
-[`elasticsearch-index`](#elasticsearch-index),
-[`errors-file`](#errors-file),
-[`from`](#from),
-[`jobs`](#jobs),
-[`log-file`](#log-file),
-[`log-level`](#log-level),
-[`min-ttl`](#min-ttl),
-[`rollups`](#rollups),
-[`root-dir`](#root-dir),
-[`to`](#to),
-[`stop-on-error`](#stop-on-error).
+[`elasticsearch-index`](#elasticsearch-index), [`errors-file`](#errors-file),
+[`from`](#from), [`jobs`](#jobs), [`log-file`](#log-file),
+[`log-level`](#log-level), [`min-ttl`](#min-ttl), [`rollups`](#rollups),
+[`root-dir`](#root-dir), [`to`](#to), [`stop-on-error`](#stop-on-error).
 
 #### `calc-size`
 
@@ -146,11 +110,8 @@ Calculate Cassandra data size from a Whisper database.
 
 Arguments: `source`, `tenant`.
 
-Available options:
-[`rollups`](#rollups),
-[`jobs`](#jobs),
-[`root-dir`](#root-dir),
-[`disable-progress`](#disable-progress).
+Available options: [`disable-progress`](#disable-progress), [`jobs`](#jobs),
+[`rollups`](#rollups), [`root-dir`](#root-dir).
 
 #### `list-files`
 
@@ -165,8 +126,7 @@ correct paths being computed from filenames.
 
 Arguments: `source`.
 
-Available options:
-[`root-dir`](#root-dir).
+Available options: [`root-dir`](#root-dir).
 
 #### `info`
 
@@ -188,6 +148,26 @@ Available options: [`from`](#from),
 Show help.
 
 ### Options
+
+* [cassandra-channel-size](#cassandra-channel-size)
+* [cassandra-keyspace](#cassandra-keyspace)
+* [cassandra-options](#cassandra-options)
+* [disable-metric-store](#disable-metric-store)
+* [disable-path-store](#disable-path-store)
+* [disable-progress](#disable-progress)
+* [elasticsearch-channel-size](#elasticsearch-channel-size)
+* [elasticsearch-index](#elasticsearch-index)
+* [errors-file](#errors-file)
+* [from](#from)
+* [jobs](#jobs)
+* [log-file](#log-file)
+* [log-level](#log-level)
+* [min-ttl](#min-ttl)
+* [rollups](#rollups)
+* [root-dir](#root-dir)
+* [run](#run)
+* [stop-on-error](#stop-on-error)
+* [to](#to)
 
 #### `from`
 
