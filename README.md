@@ -21,12 +21,17 @@ whisper2cyanite is a tool for migrating data from
   * [Migrating](#migrating)
     * [Migrating a Whole Database](#migrating-a-whole-database)
     * [Retrying to Migrate After Non-fatal Errors Occurred](#retrying-to-migrate-after-non-fatal-errors-occurred)
-    * [Migrating Paths Taken From a Database Subtree](#migrating-paths-taken-from-a-database-subtree)
-    * [Migrating Metrics For a Predetermined Period and a Single Rollup From a Database File](#migrating-metrics-for-a-predetermined-period-and-a-single-rollup-from-a-database-file)
+    * [Migrating Paths Taken from a Database Subtree](#migrating-paths-taken-from-a-database-subtree)
+    * [Migrating Metrics for a Predetermined Period and a Single Rollup from a Database File](#migrating-metrics-for-a-predetermined-period-and-a-single-rollup-from-a-database-file)
   * [Validating](#validating)
     * [Validating a Whole Database](#validating-a-whole-database)
-    * [Validating Paths Taken From a Database Subtree](#validating-paths-taken-from-a-database-subtree)
+    * [Validating Paths Taken from a Database Subtree](#validating-paths-taken-from-a-database-subtree)
     * [Validating Metrics of a Single Path](#validating-metrics-of-a-single-path)
+  * [Inspecting](#inspecting)
+    * [Listing Whisper Database Files](#listing-whisper-database-files)
+    * [Estimating Cassandra Data Size from a Whisper Database](#estimating-cassandra-data-size-from-a-whisper-database)
+    * [Getting Info About a Whisper Database File](#getting-info-about-a-whisper-database-file)
+    * [Fetching Timeseries from a Whisper Database File for a Predetermined Period](#fetching-timeseries-from-a-whisper-database-file-for-a-predetermined-period)
 * [License](#license)
 * [Thanks](#thanks)
 
@@ -364,7 +369,7 @@ This command means same as above but:
 * Set database root to the `/var/lib/whisper/` directory
 * Read files to migrate from the `errorfiles.lst` file
 
-#### Migrating Paths Taken From a Database Subtree
+#### Migrating Paths Taken from a Database Subtree
 
 Dumping names of Whisper database files to the `path-files.lst` file:
 
@@ -383,7 +388,7 @@ whisper2cyanite --run --jobs 8 --disable-metric-store --root-dir \
   http://es.example.org:9200
 ```
 
-#### Migrating Metrics For a Predetermined Period and a Single Rollup From a Database File
+#### Migrating Metrics for a Predetermined Period and a Single Rollup from a Database File
 
 Migrating metrics from the `/var/lib/whisper/requests/nginx/access.wsp` file
 for period from `1420070400` (01 Jan 2015 00:00:00) until `1421280000` (15 Jan
@@ -411,7 +416,7 @@ whisper2cyanite --jobs 8 --cassandra-options "{:compression :lz4}" \
   cass1.example.org,cass2.example.org http://es.example.org:9200
 ```
 
-#### Validating Paths Taken From a Database Subtree
+#### Validating Paths Taken from a Database Subtree
 
 Validating paths from the `/var/lib/whisper/requests/nginx` directory (the
 `requests.nginx.*` path store subtree):
@@ -430,6 +435,28 @@ Validating metrics from the `/var/lib/whisper/requests/nginx/access.wsp` file:
 whisper2cyanite --disable-path-store --root-dir /var/lib/whisper/ migrate \
   /var/lib/whisper/requests/nginx/access.wsp 'my_tenant' \
   cass1.example.org,cass2.example.org http://es.example.org:9200
+```
+
+### Inspecting
+
+#### Listing Whisper Database Files
+
+```bash
+```
+
+#### Estimating Cassandra Data Size from a Whisper Database
+
+```bash
+```
+
+#### Getting Info About a Whisper Database File
+
+```bash
+```
+
+#### Fetching Timeseries from a Whisper Database File for a Predetermined Period
+
+```bash
 ```
 
 ## License
