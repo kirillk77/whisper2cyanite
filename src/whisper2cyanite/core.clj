@@ -25,6 +25,7 @@
 (def pstore-error-files (atom (sorted-set)))
 
 (def cassandra-data-size (atom 0))
+(def points-count (atom 0))
 
 (defprotocol Processor
   (process-metrics [this rollup period retention points path file series])
@@ -141,7 +142,8 @@
               index-size (+ part-key-size (* clust-col-size points))
               rows-size (* row-size points)
               archive-size (+ index-size rows-size)]
-          (swap! cassandra-data-size + archive-size)))
+          (swap! cassandra-data-size + archive-size)
+          (swap! points-count + points)))
       (process-path [this path file])
       (fetch-data? [this]
         false))))
@@ -406,6 +408,7 @@
   (newline)
   (println "Estimated Cassandra data size:"
            (humanize/filesize @cassandra-data-size))
+  (println "Number of points:" @points-count)
   (println "Don't forget to multiply size by replication factor!")
   (wlog/exit 0))
 
