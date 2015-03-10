@@ -18,6 +18,11 @@ whisper2cyanite is a tool for migrating data from
   * [Commands](#commands)
   * [Options](#options)
 * [Usage Scenarios](#usage-scenarios)
+  * [Inspecting](#inspecting)
+    * [Listing Whisper Database Files](#listing-whisper-database-files)
+    * [Estimating Cassandra Data Size from a Whisper Database](#estimating-cassandra-data-size-from-a-whisper-database)
+    * [Getting Info About a Whisper Database File](#getting-info-about-a-whisper-database-file)
+    * [Fetching Timeseries from a Whisper Database File for a Predetermined Period](#fetching-timeseries-from-a-whisper-database-file-for-a-predetermined-period)
   * [Migrating](#migrating)
     * [Migrating a Whole Database](#migrating-a-whole-database)
     * [Retrying to Migrate After Non-fatal Errors Occurred](#retrying-to-migrate-after-non-fatal-errors-occurred)
@@ -27,11 +32,6 @@ whisper2cyanite is a tool for migrating data from
     * [Validating a Whole Database](#validating-a-whole-database)
     * [Validating Paths Taken from a Database Subtree](#validating-paths-taken-from-a-database-subtree)
     * [Validating Metrics of a Single Path](#validating-metrics-of-a-single-path)
-  * [Inspecting](#inspecting)
-    * [Listing Whisper Database Files](#listing-whisper-database-files)
-    * [Estimating Cassandra Data Size from a Whisper Database](#estimating-cassandra-data-size-from-a-whisper-database)
-    * [Getting Info About a Whisper Database File](#getting-info-about-a-whisper-database-file)
-    * [Fetching Timeseries from a Whisper Database File for a Predetermined Period](#fetching-timeseries-from-a-whisper-database-file-for-a-predetermined-period)
 * [License](#license)
 * [Thanks](#thanks)
 
@@ -327,6 +327,28 @@ Stop on the first non-fatal error.
 
 ## Usage Scenarios
 
+### Inspecting
+
+#### Listing Whisper Database Files
+
+```bash
+```
+
+#### Estimating Cassandra Data Size from a Whisper Database
+
+```bash
+```
+
+#### Getting Info About a Whisper Database File
+
+```bash
+```
+
+#### Fetching Timeseries from a Whisper Database File for a Predetermined Period
+
+```bash
+```
+
 ### Migrating
 
 #### Migrating a Whole Database
@@ -435,28 +457,6 @@ Validating metrics from the `/var/lib/whisper/requests/nginx/access.wsp` file:
 whisper2cyanite --disable-path-store --root-dir /var/lib/whisper/ migrate \
   /var/lib/whisper/requests/nginx/access.wsp 'my_tenant' \
   cass1.example.org,cass2.example.org http://es.example.org:9200
-```
-
-### Inspecting
-
-#### Listing Whisper Database Files
-
-```bash
-```
-
-#### Estimating Cassandra Data Size from a Whisper Database
-
-```bash
-```
-
-#### Getting Info About a Whisper Database File
-
-```bash
-```
-
-#### Fetching Timeseries from a Whisper Database File for a Predetermined Period
-
-```bash
 ```
 
 ## License
