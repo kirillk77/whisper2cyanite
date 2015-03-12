@@ -75,7 +75,7 @@
         err (format
              (str "Metric store validation. "
                   "%s: rollup: %s, period: %s, path: %s, time: %s, "
-                  "whisper value: %s, store value %s")
+                  "whisper value: %s, store value: %s")
              msg rollup period path time w-value s-value)]
     (when-not valid?
       (if-not @error-reported?
