@@ -36,13 +36,13 @@
 
 (defn- log-error
   "Log a error."
-  [stats-error-files file error rollup period path time]
+  [stats-error-files file error rollup period path & time]
   (swap! stats-error-files conj file)
   (wlog/error (str "Metric store error: " error ", "
                    "rollup " rollup ", "
                    "period: " period ", "
-                   "path: " path ", "
-                   "time: " time)))
+                   "path: " path
+                   (if time (str ", time: " time) ""))))
 
 (defn- get-channel
   "Get store channel."
@@ -118,8 +118,8 @@
                       (recur (.one rows)))))))
             @series)
           (catch Exception e
-            (swap! stats-error-files conj file)
-            (wlog/error "Metric store error: " e))))
+            (log-error stats-error-files file e rollup period path)
+            :mstore-error)))
       (get-stats [this]
         {:processed @stats-processed
          :error-files @stats-error-files})

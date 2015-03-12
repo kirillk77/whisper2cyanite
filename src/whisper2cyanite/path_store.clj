@@ -91,7 +91,8 @@
           (swap! stats-processed inc)
           (exists-fn (constuct-id tenant path))
           (catch Exception e
-            (log-error stats-error-files file e path))))
+            (log-error stats-error-files file e path)
+            :pstore-error)))
       (get-stats [this]
         {:processed @stats-processed
          :error-files @stats-error-files})

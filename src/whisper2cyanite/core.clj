@@ -76,7 +76,7 @@
              (str "Metric store validation. "
                   "%s: rollup: %s, period: %s, path: %s, time: %s, "
                   "whisper value: %s, store value: %s")
-             msg rollup period path time w-value s-value)]
+             msg rollup period path time w-value (str s-value))]
     (when-not valid?
       (if-not @error-reported?
         (do
@@ -89,36 +89,39 @@
 (defn- validator
   "Validator."
   [mstore pstore options tenant]
-  (let [min-ttl (:min-ttl options default-min-ttl)]
+  (let [min-ttl (:min-ttl options default-min-ttl)
+        validators [[#(not= %2 nil) "Point not found"]
+                    [#(sequential? %2) "Value is not an array"]
+                    [#(= (count %2) 1) "Array size is not equal to 1"]
+                    [#(= %1 (first %2)) "Values are not equal"]]]
     (reify
       Processor
       (process-metrics [this rollup period retention points path file series]
         (let [series (whisper/sort-series series)
               from (first (first series))
               to (first (last series))
-              mstore-series (mstore/fetch-series mstore tenant rollup period path
-                                                 from to file)
               error-reported? (atom false)
-              validators [[#(not= %2 nil) "Point not found"]
-                          [#(sequential? %2) "Value is not an array"]
-                          [#(= (count %2) 1) "Array size is not equal to 1"]
-                          [#(= %1 (first %2)) "Values are not equal"]]]
-          (doseq [point series]
-            (let [time (first point)
-                  w-value (last point)
-                  ttl (calc-ttl time retention)]
-              (when (> ttl min-ttl)
-                (log-point "Validating point" rollup period path time w-value ttl)
-                (let [s-value (get mstore-series time)]
-                  (every? #(validate-value rollup period path time w-value
-                                           s-value (first %) (second %)
-                                           error-reported? mstore-error-files
-                                           file)
-                          validators)))))))
+              mstore-series (mstore/fetch-series mstore tenant rollup period path
+                                                 from to file)]
+          (when (not= mstore-series :mstore-error)
+            (doseq [point series]
+              (let [time (first point)
+                    w-value (last point)
+                    ttl (calc-ttl time retention)]
+                (when (> ttl min-ttl)
+                  (log-point "Validating point" rollup period path time
+                             w-value ttl)
+                  (let [s-value (get mstore-series time)]
+                    (every? #(validate-value rollup period path time w-value
+                                             s-value (first %) (second %)
+                                             error-reported? mstore-error-files
+                                             file)
+                            validators))))))))
       (process-path [this path file]
-        (when-not (pstore/exist? pstore tenant path file)
-          (swap! pstore-error-files conj file)
-          (wlog/error "Path not found in the path store: " path)))
+        (let [ret (pstore/exist? pstore tenant path file)]
+          (when (and (not= ret :pstore-error) (not ret))
+            (swap! pstore-error-files conj file)
+            (wlog/error "Path not found in the path store: " path))))
       (fetch-data? [this]
         true))))
 
