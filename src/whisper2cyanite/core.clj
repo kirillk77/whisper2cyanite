@@ -91,7 +91,6 @@
   [mstore pstore options tenant]
   (let [min-ttl (:min-ttl options default-min-ttl)
         validators [[#(not= %2 nil) "Point not found"]
-                    [#(sequential? %2) "Value is not an array"]
                     [#(= (count %2) 1) "Array size is not equal to 1"]
                     [#(= %1 (first %2)) "Values are not equal"]]]
     (reify
