@@ -161,7 +161,9 @@
         data (if (fetch-data? processor)
                (whisper/fetch-archive-seq-ra ra-file file archive from to) nil)
         series (if data (whisper/remove-nulls (:series data)) nil)]
-    (process-metrics processor rollup period retention points path file series)))
+    (when (not-empty series)
+      (process-metrics processor rollup period retention points path
+                       file series))))
 
 (defn- process-file
   "Process a file."
