@@ -98,8 +98,9 @@
       Processor
       (process-metrics [this rollup period retention points path file series]
         (let [series (whisper/sort-series series)
-              from (first (first series))
-              to (first (last series))
+              times (map first series)
+              from (apply min times)
+              to (apply max times)
               error-reported? (atom false)
               mstore-series (mstore/fetch-series mstore tenant rollup period path
                                                  from to file)]
