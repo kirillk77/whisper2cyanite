@@ -105,9 +105,10 @@
       (fetch-series [this tenant rollup period path from to file]
         (try
           (swap! stats-processed inc)
-          (let [series (atom {})]
-            (let [rows (.execute session (format fetch-cql tenant rollup period
-                                                 path from to))
+          (let [series (atom {})
+                cql (format fetch-cql tenant rollup period path from to)]
+            (log/debug "Fetch series CQL:" cql)
+            (let [rows (.execute session cql)
                   first-row (.one rows)]
               (when first-row
                 (loop [row first-row]
