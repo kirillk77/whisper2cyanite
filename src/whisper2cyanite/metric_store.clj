@@ -18,6 +18,7 @@
 
 (def ^:const default-cassandra-keyspace "metric")
 (def ^:const default-cassandra-channel-size 100)
+(def ^:const default-cassandra-batch-size 1000)
 (def ^:const default-cassandra-options {})
 
 (def insert-cql
@@ -91,6 +92,7 @@
                     (alia/connect keyspace))
         insert! (get-cassandra-insert session)
         chan-size (:cassandra-channel-size options default-cassandra-channel-size)
+        batch-size (:cassandra-batch-size options default-cassandra-batch-size)
         data-stored? (atom false)
         stats-error-files (atom (sorted-set))
         stats-processed (atom 0)
@@ -98,7 +100,8 @@
                              stats-error-files run)]
     (log/info (str "The metric store has been created. "
                    "Keyspace: " keyspace ", "
-                   "channel size: " chan-size))
+                   "channel size: " chan-size ", "
+                   "batch size: " batch-size))
     (reify
       MetricStore
       (insert [this tenant rollup period path timeseries file]
@@ -107,7 +110,7 @@
                                [(int ttl) [(double value)] tenant (int rollup)
                                 (int period) path (long time)])
                             timeseries)
-                batches (partition-all 1000 series)]
+                batches (partition-all batch-size series)]
             (doseq [values batches]
               (swap! stats-processed + (count values))
               (async/>!! channel {:values values
