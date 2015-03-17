@@ -51,16 +51,19 @@
     (reify
       Processor
       (process-metrics [this rollup period retention points path file series]
-        (let [points-processed (atom 0)]
-          (doseq [point series]
-            (let [time (first point)
-                  value (last point)
-                  ttl (calc-ttl time retention)]
-              (when (> ttl min-ttl)
-                (log-point "Migrating point" rollup period path time value ttl)
-                (swap! points-processed inc)
-                (mstore/insert mstore tenant rollup period path time value
-                               ttl file))))
+        (let [points-processed (atom 0)
+              series-ttl (->> series
+                              (map #(let [time (first %)
+                                          value (last %)
+                                          ttl (calc-ttl time retention)]
+                                      (if (> ttl min-ttl)
+                                        (do (log-point "Migrating point" rollup
+                                                       period path time value ttl)
+                                            [time value ttl])
+                                        nil)))
+                              (remove nil?))]
+          (swap! points-processed + (count series-ttl))
+          (mstore/insert mstore tenant rollup period path series-ttl file)
           (log/debug (format (str "Metric migrated: path %s, rollup %s, "
                                   "period: %s, points migrated: %s") file
                                   rollup period @points-processed))

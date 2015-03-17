@@ -7,16 +7,17 @@
             [whisper2cyanite.utils :as utils]
             [whisper2cyanite.logging :as wlog])
   (:import [com.datastax.driver.core
-            PreparedStatement]))
+            PreparedStatement
+            BatchStatement]))
 
 (defprotocol MetricStore
-  (insert [this tenant rollup period path time value ttl file])
+  (insert [this tenant rollup period path timeseries file])
   (fetch-series [this tenant rollup period path from to file])
   (get-stats [this])
   (shutdown [this]))
 
 (def ^:const default-cassandra-keyspace "metric")
-(def ^:const default-cassandra-channel-size 10000)
+(def ^:const default-cassandra-channel-size 100)
 (def ^:const default-cassandra-options {})
 
 (def insert-cql
@@ -34,15 +35,22 @@
   [session]
   (alia/prepare session insert-cql))
 
+(defn- batch
+  "Create a batch of prepared statements"
+  [^PreparedStatement statement values]
+  (let [batch-statement (BatchStatement.)]
+    (doseq [value values]
+      (.add batch-statement (.bind statement (into-array Object value))))
+    batch-statement))
+
 (defn- log-error
   "Log a error."
-  [stats-error-files file error rollup period path & time]
+  [stats-error-files file error rollup period path]
   (swap! stats-error-files conj file)
   (wlog/error (str "Metric store error: " error ", "
                    "rollup " rollup ", "
                    "period: " period ", "
-                   "path: " path
-                   (if time (str ", time: " time) ""))))
+                   "path: " path)))
 
 (defn- get-channel
   "Get store channel."
@@ -51,22 +59,20 @@
     (utils/go-while (not @data-stored?)
                     (let [data (async/<! ch)]
                       (if data
-                        (let [value (:value data)
-                              [_ _ tenant rollup period path time] value
-                              file (:file data)]
+                        (let [{:keys [values rollup period path file]} data]
                           (try
                             (when run
                               (async/take!
-                               (alia/execute-chan session statement
-                                                  {:values value
-                                                   :consistency :any})
+                               (alia/execute-chan session
+                                                  (batch statement values)
+                                                  {:consistency :any})
                                (fn [rows-or-e]
                                  (if (instance? Throwable rows-or-e)
                                    (log-error stats-error-files file rows-or-e
-                                              rollup period path time)))))
+                                              rollup period path)))))
                             (catch Exception e
                               (log-error stats-error-files file e rollup period
-                                         path time))))
+                                         path))))
                         (when (not @data-stored?)
                           (swap! data-stored? (fn [_] true))))))
     ch))
@@ -95,15 +101,22 @@
                    "channel size: " chan-size))
     (reify
       MetricStore
-      (insert [this tenant rollup period path time value ttl file]
+      (insert [this tenant rollup period path timeseries file]
         (try
-          (swap! stats-processed inc)
-          (async/>!! channel {:value [(int ttl) [(double value)] (str tenant)
-                                      (int rollup) (int period) (str path)
-                                      (long time)]
-                              :file file})
+          (let [series (map #(let [[time value ttl] %]
+                               [(int ttl) [(double value)] tenant (int rollup)
+                                (int period) path (long time)])
+                            timeseries)
+                batches (partition-all 1000 series)]
+            (doseq [values batches]
+              (swap! stats-processed + (count values))
+              (async/>!! channel {:values values
+                                  :rollup rollup
+                                  :period period
+                                  :path path
+                                  :file file})))
           (catch Exception e
-            (log-error stats-error-files file e rollup period path time))))
+            (log-error stats-error-files file e rollup period path))))
       (fetch-series [this tenant rollup period path from to file]
         (try
           (swap! stats-processed inc)
