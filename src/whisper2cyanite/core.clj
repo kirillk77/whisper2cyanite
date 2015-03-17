@@ -47,8 +47,7 @@
 (defn- migrator
   "Migrator."
   [mstore pstore options tenant]
-  (let [run (:run options false)
-        min-ttl (:min-ttl options default-min-ttl)]
+  (let [min-ttl (:min-ttl options default-min-ttl)]
     (reify
       Processor
       (process-metrics [this rollup period retention points path file series]
@@ -58,12 +57,10 @@
                 ttl (calc-ttl time retention)]
             (when (> ttl min-ttl)
               (log-point "Migrating point" rollup period path time value ttl)
-              (when run
-                (mstore/insert mstore tenant rollup period path time value
-                               ttl file))))))
+              (mstore/insert mstore tenant rollup period path time value
+                             ttl file)))))
       (process-path [this path file]
-        (when run
-          (pstore/insert pstore tenant path file)))
+        (pstore/insert pstore tenant path file))
       (fetch-data? [this]
         true))))
 

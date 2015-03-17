@@ -51,7 +51,7 @@
   (let [path (:path body)
         id (constuct-id (:tenant body) path)]
     (when-not (exists-fn id)
-      (let [return (update-fn id body)
+      (let [return (when update-fn (update-fn id body))
             status (:status return)]
         (when (and status (>= status 400))
           (log-error stats-error-files file
@@ -62,10 +62,11 @@
   "Create an Elasticsearch path store."
   [url options]
   (log/info "Creating the path store...")
-  (let [index (:elasticsearch-index options default-es-index)
+  (let [run (:run options false)
+        index (:elasticsearch-index options default-es-index)
         conn (esr/connect url)
         exists-fn (partial esrd/present? conn index es-def-type)
-        update-fn (partial esrd/put conn index es-def-type)
+        update-fn (if run (partial esrd/put conn index es-def-type) nil)
         data-stored? (atom false)
         stats-error-files (atom (sorted-set))
         stats-processed (atom 0)]

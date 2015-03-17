@@ -46,7 +46,7 @@
 
 (defn- get-channel
   "Get store channel."
-  [session statement chan-size data-stored? stats-error-files]
+  [session statement chan-size data-stored? stats-error-files run]
   (let [ch (async/chan chan-size)]
     (utils/go-while (not @data-stored?)
                     (let [data (async/<! ch)]
@@ -55,14 +55,15 @@
                               [_ _ tenant rollup period path time] value
                               file (:file data)]
                           (try
-                            (async/take!
-                             (alia/execute-chan session statement
-                                                {:values value
-                                                 :consistency :any})
-                             (fn [rows-or-e]
-                               (if (instance? Throwable rows-or-e)
-                                 (log-error stats-error-files file rows-or-e
-                                            rollup period path time))))
+                            (when run
+                              (async/take!
+                               (alia/execute-chan session statement
+                                                  {:values value
+                                                   :consistency :any})
+                               (fn [rows-or-e]
+                                 (if (instance? Throwable rows-or-e)
+                                   (log-error stats-error-files file rows-or-e
+                                              rollup period path time)))))
                             (catch Exception e
                               (log-error stats-error-files file e rollup period
                                          path time))))
@@ -74,7 +75,8 @@
   "Cassandra metric store."
   [hosts options]
   (log/info "Creating the metric store...")
-  (let [keyspace (:cassandra-keyspace options default-cassandra-keyspace)
+  (let [run (:run options false)
+        keyspace (:cassandra-keyspace options default-cassandra-keyspace)
         c-options (merge {:contact-points hosts}
                          default-cassandra-options
                          (:cassandra-options options {}))
@@ -87,7 +89,7 @@
         stats-error-files (atom (sorted-set))
         stats-processed (atom 0)
         channel (get-channel session insert! chan-size data-stored?
-                             stats-error-files)]
+                             stats-error-files run)]
     (log/info (str "The metric store has been created. "
                    "Keyspace: " keyspace ", "
                    "channel size: " chan-size))
