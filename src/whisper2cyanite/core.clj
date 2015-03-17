@@ -51,14 +51,20 @@
     (reify
       Processor
       (process-metrics [this rollup period retention points path file series]
-        (doseq [point series]
-          (let [time (first point)
-                value (last point)
-                ttl (calc-ttl time retention)]
-            (when (> ttl min-ttl)
-              (log-point "Migrating point" rollup period path time value ttl)
-              (mstore/insert mstore tenant rollup period path time value
-                             ttl file)))))
+        (let [points-processed (atom 0)]
+          (doseq [point series]
+            (let [time (first point)
+                  value (last point)
+                  ttl (calc-ttl time retention)]
+              (when (> ttl min-ttl)
+                (log-point "Migrating point" rollup period path time value ttl)
+                (swap! points-processed inc)
+                (mstore/insert mstore tenant rollup period path time value
+                               ttl file))))
+          (log/debug (format (str "Metric migrated: path %s, rollup %s, "
+                                  "period: %s, points migrated: %s") file
+                                  rollup period @points-processed))
+          @points-processed))
       (process-path [this path file]
         (pstore/insert pstore tenant path file))
       (fetch-data? [this]
@@ -89,7 +95,8 @@
   (let [min-ttl (:min-ttl options default-min-ttl)
         validators [[#(not= %2 nil) "Point not found"]
                     [#(= (count %2) 1) "Array size is not equal to 1"]
-                    [#(= %1 (first %2)) "Values are not equal"]]]
+                    [#(= %1 (first %2)) "Values are not equal"]]
+        points-processed (atom 0)]
     (reify
       Processor
       (process-metrics [this rollup period retention points path file series]
@@ -143,7 +150,8 @@
               rows-size (* row-size points)
               archive-size (+ index-size rows-size)]
           (swap! cassandra-data-size + archive-size)
-          (swap! points-count + points)))
+          (swap! points-count + points))
+        points)
       (process-path [this path file])
       (fetch-data? [this]
         false))))
