@@ -2,6 +2,7 @@
   (:require [qbits.alia :as alia]
             [qbits.alia.policy.load-balancing :as alia_lbp]
             [clojure.core.async :as async]
+            [throttler.core :as trtl]
             [clojure.tools.logging :as log]
             [clojure.string :as str]
             [whisper2cyanite.utils :as utils]
@@ -17,8 +18,9 @@
   (shutdown [this]))
 
 (def ^:const default-cassandra-keyspace "metric")
-(def ^:const default-cassandra-channel-size 100)
+(def ^:const default-cassandra-channel-size 500000)
 (def ^:const default-cassandra-batch-size 1000)
+(def ^:const default-cassandra-batch-rate nil)
 (def ^:const default-cassandra-options {})
 
 (def insert-cql
@@ -93,11 +95,16 @@
         insert! (get-cassandra-insert session)
         chan-size (:cassandra-channel-size options default-cassandra-channel-size)
         batch-size (:cassandra-batch-size options default-cassandra-batch-size)
+        chan-size-batches (utils/ceil (/ chan-size batch-size))
+        batch-rate (:cassandra-batch-rate options default-cassandra-batch-rate)
         data-stored? (atom false)
         stats-error-files (atom (sorted-set))
         stats-processed (atom 0)
-        channel (get-channel session insert! chan-size data-stored?
-                             stats-error-files run)]
+        main-channel (get-channel session insert! chan-size-batches data-stored?
+                                  stats-error-files run)
+        channel (if batch-rate
+                  (trtl/throttle-chan main-channel batch-rate :second)
+                  main-channel)]
     (log/info (str "The metric store has been created. "
                    "Keyspace: " keyspace ", "
                    "channel size: " chan-size ", "

@@ -51,3 +51,8 @@
   "Is the file a Whisper database?"
   [path]
   (= (extract-extension path) ".wsp"))
+
+(defn ceil
+  "Returns the least integer greater than or equal to n."
+  [n]
+  (int (Math/ceil (double n))))

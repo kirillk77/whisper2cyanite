@@ -102,9 +102,10 @@
   (check-options command #{:from :to :run :rollups :jobs :min-ttl :root-dir
                            :cassandra-keyspace :cassandra-options
                            :cassandra-channel-size :cassandra-batch-size
-                           :disable-metric-store :elasticsearch-index
-                           :disable-path-store :log-file :log-level :disable-log
-                           :errors-file :stop-on-error :disable-progress}
+                           :cassandra-batch-rate :disable-metric-store
+                           :elasticsearch-index :disable-path-store :log-file
+                           :log-level :disable-log :errors-file :stop-on-error
+                           :disable-progress}
                  options)
   (let [{:keys [source tenant cass-hosts es-url
                 options]} (prepare-common-args arguments options)]
@@ -198,13 +199,15 @@
     :parse-fn #(read-string %)
     :validate [#(= clojure.lang.PersistentArrayMap (type %))]]
    [nil "--cassandra-channel-size SIZE"
-    (str "Cassandra channel size. Default: "
+    (str "Cassandra channel size in points. Default: "
          mstore/default-cassandra-channel-size)
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 %)]]
    [nil "--cassandra-batch-size SIZE"
-    (str "Cassandra batch size. Default: "
-         mstore/default-cassandra-batch-size)
+    (str "Cassandra batch size. Default: " mstore/default-cassandra-batch-size)
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 %)]]
+   [nil "--cassandra-batch-rate RATE" "Cassandra batch rate (batches per second)"
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 %)]]
    [nil "--disable-metric-store" "Disable writing to metric store"]
