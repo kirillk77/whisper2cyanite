@@ -57,8 +57,9 @@
 
 (defn- get-channel
   "Get store channel."
-  [session statement chan-size data-stored? stats-error-files run]
-  (let [ch (async/chan chan-size)]
+  [session statement chan-size batch-rate data-stored? stats-error-files run]
+  (let [ch-in (async/chan chan-size)
+        ch (if batch-rate (trtl/throttle-chan ch-in batch-rate :second) ch-in)]
     (utils/go-while (not @data-stored?)
                     (let [data (async/<! ch)]
                       (if data
@@ -78,7 +79,7 @@
                                          path))))
                         (when (not @data-stored?)
                           (swap! data-stored? (fn [_] true))))))
-    ch))
+    ch-in))
 
 (defn cassandra-metric-store
   "Cassandra metric store."
@@ -100,11 +101,8 @@
         data-stored? (atom false)
         stats-error-files (atom (sorted-set))
         stats-processed (atom 0)
-        main-channel (get-channel session insert! chan-size-batches data-stored?
-                                  stats-error-files run)
-        channel (if batch-rate
-                  (trtl/throttle-chan main-channel batch-rate :second)
-                  main-channel)]
+        channel (get-channel session insert! chan-size-batches batch-rate
+                             data-stored? stats-error-files run)]
     (log/info (str "The metric store has been created. "
                    "Keyspace: " keyspace ", "
                    "channel size: " chan-size ", "
