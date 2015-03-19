@@ -176,21 +176,21 @@
 (def cli-options
   [["-f" "--from FROM" "From time (Unix epoch)"
     :parse-fn #(Integer/parseInt %)
-    :validate [#(<= 0 %)]]
+    :validate [#(<= 0 %) "Must be a number >= 0"]]
    ["-t" "--to TO" "To time (Unix epoch)"
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %)]]
+    :validate [#(< 0 %) "Must be a number > 0"]]
    ["-r" "--run" "Force normal run (dry run using on default)"]
    ["-R" "--rollups ROLLUPS"
     "Define rollups. Format: <seconds_per_point[:retention],...> Example: 60,300:31536000"
     :parse-fn #(parse-rollups %)
-    :validate [check-rollups]]
+    :validate [check-rollups "Invalid rollup"]]
    ["-j" "--jobs JOBS" "Number of jobs to run simultaneously"
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %)]]
+    :validate [#(< 0 %) "Must be a number > 0"]]
    ["-T" "--min-ttl TTL" (str "Minimal TTL. Default: " core/default-min-ttl)
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %)]]
+    :validate [#(< 0 %) "Must be a number > 0"]]
    ["-D" "--root-dir DIRECTORY" "Root directory"]
    [nil "--cassandra-keyspace KEYSPACE"
     (str "Cassandra keyspace. Default: " mstore/default-cassandra-keyspace)]
@@ -202,14 +202,14 @@
     (str "Cassandra channel size in points. Default: "
          mstore/default-cassandra-channel-size)
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %)]]
+    :validate [#(< 0 %) "Must be a number > 0"]]
    [nil "--cassandra-batch-size SIZE"
     (str "Cassandra batch size. Default: " mstore/default-cassandra-batch-size)
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %)]]
+    :validate [#(< 0 %) "Must be a number > 0"]]
    [nil "--cassandra-batch-rate RATE" "Cassandra batch rate (batches per second)"
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %)]]
+    :validate [#(< 0 % 101) "Must be a number between 0 and 101"]]
    [nil "--disable-metric-store" "Disable writing to metric store"]
    [nil "--elasticsearch-index INDEX"
     (str "Elasticsearch index. Default: " pstore/default-es-index)]
@@ -219,7 +219,8 @@
     (str "Log level (all, trace, debug, info, warn, error, fatal, off). "
          "Default: " wlog/default-log-level)
     :validate [#(or (= (count %) 0)
-                    (not= (get logconfig/levels % :not-found) :not-found))]]
+                    (not= (get logconfig/levels % :not-found) :not-found))
+               "Invalid log level"]]
    ["-e" "--errors-file FILE"
     (str "Dump a list of files during processing which errors occurred")]
    ["-S" "--stop-on-error" "Stop on first non-fatal error"]
