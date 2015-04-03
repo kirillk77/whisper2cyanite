@@ -4,8 +4,7 @@
             [clojurewerkz.elastisch.rest.document :as esrd]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [whisper2cyanite.logging :as wlog]
-            [whisper2cyanite.utils :as utils]))
+            [whisper2cyanite.logging :as wlog]))
 
 (defprotocol PathStore
   (insert [this tenant path file])
