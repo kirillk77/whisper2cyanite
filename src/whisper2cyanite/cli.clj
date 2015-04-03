@@ -209,7 +209,7 @@
     :validate [#(< 0 %) "Must be a number > 0"]]
    [nil "--cassandra-batch-rate RATE" "Cassandra batch rate (batches per second)"
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 % 101) "Must be a number between 0 and 101"]]
+    :validate [#(< 0 % 101) "Must be a number between 1-100"]]
    [nil "--disable-metric-store" "Disable writing to metric store"]
    [nil "--elasticsearch-index INDEX"
     (str "Elasticsearch index. Default: " pstore/default-es-index)]
