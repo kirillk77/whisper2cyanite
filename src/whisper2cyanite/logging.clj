@@ -1,6 +1,5 @@
 (ns whisper2cyanite.logging
-  (:require [whisper2cyanite.utils :as utils]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.stacktrace :as stacktrace]
             [clojure.tools.logging :as log]
             [org.spootnik.logconfig :as logconfig]))
