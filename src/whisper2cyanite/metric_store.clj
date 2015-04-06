@@ -30,7 +30,7 @@
 
 (def fetch-cql
   (str "SELECT data, time FROM metric WHERE "
-       "tenant = '%s' AND rollup = %s  AND period = %s AND "
+       "tenant = '%s' AND rollup = %s AND period = %s AND "
        "path = '%s' AND time >= %s AND time <= %s;"))
 
 (defn- get-cassandra-insert
