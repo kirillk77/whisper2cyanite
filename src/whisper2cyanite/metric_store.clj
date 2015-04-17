@@ -65,15 +65,15 @@
                       (if data
                         (let [{:keys [values rollup period path file]} data]
                           (try
-                            (when run
-                              (async/take!
-                               (alia/execute-chan session
-                                                  (batch statement values)
-                                                  {:consistency :any})
-                               (fn [rows-or-e]
-                                 (if (instance? Throwable rows-or-e)
-                                   (log-error stats-error-files file rows-or-e
-                                              rollup period path)))))
+                            (let [query (batch statement values)]
+                              (when run
+                                (async/take!
+                                 (alia/execute-chan session
+                                                    {:consistency :any})
+                                 (fn [rows-or-e]
+                                   (if (instance? Throwable rows-or-e)
+                                     (log-error stats-error-files file rows-or-e
+                                                rollup period path))))))
                             (catch Exception e
                               (log-error stats-error-files file e rollup period
                                          path))))
