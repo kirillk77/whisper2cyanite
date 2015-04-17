@@ -4,10 +4,10 @@
             [clojure.tools.logging :as log]
             [org.spootnik.logconfig :as logconfig]))
 
-(defn disable-logging!
+(defmacro disable-logging!
   "Disable logging."
   []
-  (logconfig/start-logging! {:level "off" :console false :files ""}))
+  `(logconfig/start-logging! {:level "off" :console false :files ""}))
 
 (disable-logging!)
 
