@@ -4,7 +4,12 @@
             [clojure.tools.logging :as log]
             [org.spootnik.logconfig :as logconfig]))
 
-(logconfig/start-logging! {:level "off" :console false :files ""})
+(defn disable-logging!
+  "Disable logging."
+  []
+  (logconfig/start-logging! {:level "off" :console false :files ""}))
+
+(disable-logging!)
 
 (def ^:const default-log-file "whisper2cyanite.log")
 (def ^:const default-log-level "info")
@@ -19,9 +24,10 @@
   (swap! print-log? (fn [_] (:disable-progress options @print-log?)))
   (swap! disable-log? (fn [_] (:disable-log options @disable-log?)))
   (swap! stop-on-error? (fn [_] (:stop-on-error options @stop-on-error?)))
-  (logconfig/start-logging!
-   {:level (:log-level options default-log-level)
-    :files [(:log-file options default-log-file)]}))
+  (if-not @disable-log?
+    (logconfig/start-logging! {:level (:log-level options default-log-level)
+                               :files [(:log-file options default-log-file)]})
+    (disable-logging!)))
 
 (defn info-always
   "Always log info."
