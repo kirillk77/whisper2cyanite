@@ -222,7 +222,7 @@
         (prog/set-progress-bar! "[:bar] :done")
         (prog/config-progress-bar! :width pbar-width)
         (prog/init 0)
-        (doseq [path paths]
+        (doseq [_ paths]
           (prog/tick))
         (prog/done)))
     (wlog/info (format "Found %s paths" (count paths)))
