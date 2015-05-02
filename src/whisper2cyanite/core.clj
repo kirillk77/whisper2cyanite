@@ -27,6 +27,8 @@
 (def cassandra-data-size (atom 0))
 (def points-count (atom 0))
 
+(def starting-str "==================== Starting ====================")
+
 (defprotocol Processor
   (process-metrics [this rollup period retention points path file series])
   (process-path [this path file])
@@ -353,6 +355,7 @@
   [source tenant cass-host es-url options processor-fn start-title title]
   (wlog/set-logging! options)
   (try
+    (log/info starting-str)
     (wlog/info start-title)
     (let [[root-dir files] (get-root-dir-and-files source options)
           files-count (count files)
