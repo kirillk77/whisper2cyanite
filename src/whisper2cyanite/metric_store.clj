@@ -53,7 +53,7 @@
   (wlog/error (str "Metric store error: " error ", "
                    "rollup " rollup ", "
                    "period: " period ", "
-                   "path: " path)))
+                   "path: " path) error))
 
 (defn- get-channel
   "Get store channel."

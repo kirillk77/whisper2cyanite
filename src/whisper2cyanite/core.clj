@@ -128,7 +128,7 @@
         (let [ret (pstore/exist? pstore tenant path file)]
           (when (and (not= ret :pstore-error) (not ret))
             (swap! pstore-error-files conj file)
-            (wlog/error "Path not found in the path store: " path))))
+            (wlog/error (str "Path not found in the path store: " path)))))
       (fetch-data? [this]
         true))))
 
@@ -256,7 +256,7 @@
       (try
         (mstore/cassandra-metric-store cass-host options)
         (catch Exception e
-          (wlog/fatal "Error creating metric store: " e)))
+          (wlog/fatal (str "Error creating metric store: " e) e)))
       nil)
     :true))
 
@@ -267,7 +267,7 @@
     (try
       (pstore/elasticsearch-metric-store es-url options)
       (catch Exception e
-        (wlog/fatal "Error creating path store: " e)))
+        (wlog/fatal (str "Error creating path store: " e) e)))
     nil))
 
 (defn- get-from-to
@@ -304,7 +304,7 @@
   [file error-files]
   (when (> (count error-files) 0)
     (wlog/info (str "Dumping a list of files during processing which errors "
-                    "occurred to the file: ") file)
+                    "occurred to the file: " file))
     (spit file (str/join "\n" error-files))))
 
 (defn- show-error-files
@@ -363,7 +363,7 @@
           pstore (create-pstore es-url options)
           processor (processor-fn mstore pstore options tenant)
           process-file-fn (fn [file]
-                            (wlog/info "Processing path: " file)
+                            (wlog/info (str "Processing path: " file))
                             (when-not @wlog/print-log?
                               (prog/tick))
                             (process-file file root-dir mstore pstore tenant

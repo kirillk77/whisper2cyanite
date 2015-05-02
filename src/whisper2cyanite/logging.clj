@@ -4,12 +4,12 @@
             [clojure.tools.logging :as log]
             [org.spootnik.logconfig :as logconfig]))
 
-(defmacro disable-logging!
-  "Disable logging."
+(defmacro log-disable-logging!
+  "Disable logging macro."
   []
   `(logconfig/start-logging! {:level "off" :console false :files ""}))
 
-(disable-logging!)
+(log-disable-logging!)
 
 (def ^:const default-log-file "whisper2cyanite.log")
 (def ^:const default-log-level "info")
@@ -27,14 +27,27 @@
   (if-not @disable-log?
     (logconfig/start-logging! {:level (:log-level options default-log-level)
                                :files [(:log-file options default-log-file)]})
-    (disable-logging!)))
+    (log-disable-logging!)))
 
-(defn info-always
+(defmacro log-log
+  [f msg throwable]
+  `(if (instance? Throwable ~throwable)
+     (~f ~throwable ~msg)
+     (~f ~msg)))
+
+(defmacro log-print
+  [msg throwable]
+  `(do
+     (println ~msg)
+     (when (instance? Throwable ~throwable)
+       (stacktrace/print-stack-trace ~throwable))))
+
+(defmacro info-always
   "Always log info."
-  [& args]
-  (let [args-str (str/join "" args)]
-    (println args-str)
-    (log/info args-str)))
+  [msg & [throwable]]
+  `(do
+     (log-print ~msg ~throwable)
+     (log-log log/info ~msg ~throwable)))
 
 (defn exit
   "Exit."
@@ -48,46 +61,45 @@
       (println exit-msg)))
   (System/exit ret-code))
 
-(defn info
+(defmacro info
   "Log info."
-  [& args]
-  (let [args-str (str/join "" args)]
-    (when @print-log?
-      (println args-str))
-    (log/info args-str)))
+  [msg & [throwable]]
+  `(do
+     (when @print-log?
+       (log-print ~msg ~throwable))
+     (log-log log/info ~msg ~throwable)))
 
-(defn warning
+(defmacro warning
   "Log warning."
-  [& args]
-  (let [args-str (str/join "" args)]
-    (when @print-log?
-      (println args-str))
-    (log/warn args-str)))
+  [msg & [throwable]]
+  `(do
+     (when @print-log?
+       (log-print ~msg ~throwable))
+     (log-log log/warn ~msg ~throwable)))
 
-(defn error
+(defmacro error
   "Log error."
-  [& args]
-  (let [args-str (str/join "" args)]
-    (when (and (not @print-log?) @stop-on-error?)
-      (newline))
-    (when (or @print-log? @stop-on-error?)
-      (println args-str))
-    (log/error args-str))
-  (when @stop-on-error?
-    (exit 1)))
+  [msg & [throwable]]
+  `(do
+     (when (and (not @print-log?) @stop-on-error?)
+       (newline))
+     (when (or @print-log? @stop-on-error?)
+       (log-print ~msg ~throwable))
+     (log-log log/error ~msg ~throwable)
+     (when @stop-on-error?
+       (exit 1))))
 
-(defn fatal
+(defmacro fatal
   "Log fatal."
-  [& args]
-  (let [args-str (str/join "" args)]
-    (when-not @print-log?
-      (newline))
-    (println args-str)
-    (log/fatal args-str))
-  (exit 1))
+  [msg & [throwable]]
+  `(do
+     (when-not @print-log?
+       (newline))
+     (log-print ~msg ~throwable)
+     (log-log log/fatal ~msg ~throwable)
+     (exit 1)))
 
 (defn unhandled-error
   "Log unhandled error."
-  [e]
-  (fatal "Error: " e)
-  (stacktrace/print-stack-trace e))
+  [throwable]
+  (fatal (str "Fatal error: " throwable) throwable))

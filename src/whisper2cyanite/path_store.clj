@@ -42,7 +42,7 @@
   "Log a error."
   [stats-error-files file error path]
   (swap! stats-error-files conj file)
-  (wlog/error (format "Path store error: %s, path: %s" error path)))
+  (wlog/error (format "Path store error: %s, path: %s" error path) error))
 
 (defn- put-path
   "Put a path."
