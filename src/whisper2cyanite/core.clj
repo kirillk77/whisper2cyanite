@@ -4,7 +4,6 @@
             [clojure.string :as str]
             [clojure.set :as set]
             [com.climate.claypoole :as cp]
-            [clojure.java.io :as io]
             [clj-progress.core :as prog]
             [clojure.contrib.humanize :as humanize]
             [clojure.tools.logging :as log]
