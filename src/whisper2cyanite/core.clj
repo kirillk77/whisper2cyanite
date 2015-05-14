@@ -8,10 +8,10 @@
             [clj-progress.core :as prog]
             [clojure.contrib.humanize :as humanize]
             [clojure.tools.logging :as log]
+            [whisper2cyanite.logging :as wlog]
             [whisper2cyanite.utils :as utils]
             [whisper2cyanite.metric-store :as mstore]
-            [whisper2cyanite.path-store :as pstore]
-            [whisper2cyanite.logging :as wlog]))
+            [whisper2cyanite.path-store :as pstore]))
 
 (def ^:const default-jobs 1)
 (def ^:const default-min-ttl 3600)

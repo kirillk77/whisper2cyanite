@@ -1,12 +1,12 @@
 (ns whisper2cyanite.metric-store
-  (:require [qbits.alia :as alia]
+  (:require [whisper2cyanite.logging :as wlog]
+            [qbits.alia :as alia]
             [qbits.alia.policy.load-balancing :as alia_lbp]
             [clojure.core.async :as async]
             [throttler.core :as trtl]
             [clojure.tools.logging :as log]
             [clojure.string :as str]
-            [whisper2cyanite.utils :as utils]
-            [whisper2cyanite.logging :as wlog])
+            [whisper2cyanite.utils :as utils])
   (:import [com.datastax.driver.core
             PreparedStatement
             BatchStatement]))
