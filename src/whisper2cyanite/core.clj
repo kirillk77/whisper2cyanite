@@ -7,6 +7,7 @@
             [clj-progress.core :as prog]
             [clojure.contrib.humanize :as humanize]
             [clojure.tools.logging :as log]
+            [me.raynes.fs :as fs]
             [whisper2cyanite.logging :as wlog]
             [whisper2cyanite.utils :as utils]
             [whisper2cyanite.metric-store :as mstore]
@@ -202,7 +203,7 @@
 (defn- get-paths-from-file
   "Get paths form a file."
   [file]
-  (if (utils/is-whisper? file)
+  (if (utils/whisper? file)
     [file]
     (do
       (wlog/info (str "Loading paths from file: " file))
@@ -211,7 +212,7 @@
 (defn- get-paths
   "Get paths."
   [source]
-  (let [is-dir? (utils/is-directory? source)
+  (let [is-dir? (fs/directory? source)
         paths (if is-dir?
                 (whisper/get-paths source)
                 (get-paths-from-file source))]
@@ -232,11 +233,11 @@
 (defn- get-root-dir
   "Get root directory."
   [source options]
-  (let [dir (utils/extract-directory (utils/get-cpath source))
+  (let [dir (utils/extract-directory (fs/normalized source))
         root-dir (:root-dir options nil)]
     (if-not root-dir
       dir
-      (let [root-dir-c (utils/get-cpath root-dir)]
+      (let [root-dir-c (fs/normalized root-dir)]
         (when (or (> (count root-dir-c) (count dir))
                   (not= (subs dir 0 (count root-dir-c)) root-dir-c))
           (throw (Exception. (str "Invalid root directory: " root-dir))))
@@ -244,7 +245,7 @@
 
 (defn- get-root-dir-and-files
   [source options]
-  (if (or (utils/is-directory? source) (utils/is-whisper? source))
+  (if (or (fs/directory? source) (utils/whisper? source))
     [(get-root-dir source options) (get-paths source)]
     (let [files (get-paths source)]
       [(get-root-dir (first files) options) files])))
@@ -431,7 +432,7 @@
   "List files."
   [dir]
   (doseq [path (sort (whisper/get-paths dir))]
-    (println (utils/get-cpath path))))
+    (println (fs/normalized path))))
 
 (defn list-paths
   "List paths."

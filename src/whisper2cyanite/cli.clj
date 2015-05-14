@@ -1,11 +1,11 @@
 (ns whisper2cyanite.cli
   (:require [clojure.string :as str]
             [clojure.tools.cli :as cli]
+            [me.raynes.fs :as fs]
             [whisper2cyanite.logging :as wlog]
             [whisper2cyanite.metric-store :as mstore]
             [whisper2cyanite.path-store :as pstore]
             [whisper2cyanite.core :as core]
-            [whisper2cyanite.utils :as utils]
             [org.spootnik.logconfig :as logconfig])
   (:gen-class))
 
@@ -75,7 +75,7 @@
 
 (defn- check-source
   [source options]
-  (when (and (utils/is-file? source) (not (:root-dir options nil)))
+  (when (and (fs/file? source) (not (:root-dir options nil)))
     (exit 1 (error-msg
              ["For file source you must pass the \"--root-dir\" option"]))))
 
