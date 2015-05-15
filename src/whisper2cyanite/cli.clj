@@ -224,7 +224,8 @@
    ["-e" "--errors-file FILE"
     (str "Dump a list of files during processing which errors occurred")]
    ["-S" "--stop-on-error" "Stop on first non-fatal error"]
-   ["-P" "--disable-progress" "Disable progress bar"]])
+   ["-P" "--disable-progress" "Disable progress bar"]
+   ["-h" "--help" "Show this help"]])
 
 (defn- run-command
   "Run command."
@@ -242,7 +243,7 @@
         (cli/parse-opts args cli-options)]
     ;; Handle help and error conditions
     (cond
-     (< (count args) 1) (exit 0 (usage summary))
+     (or (< (count args) 1) (contains? options :help)) (exit 0 (usage summary))
      errors (exit 1 (error-msg errors)))
     ;; Run command
     (run-command arguments options summary)
