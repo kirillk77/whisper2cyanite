@@ -1,5 +1,6 @@
 (ns whisper2cyanite.core
-  (:import (java.io RandomAccessFile))
+  (:import (java.io RandomAccessFile)
+           (org.joda.time.format PeriodFormatterBuilder))
   (:require [clj-whisper.core :as whisper]
             [clojure.string :as str]
             [clojure.set :as set]
@@ -8,6 +9,7 @@
             [clojure.contrib.humanize :as humanize]
             [clojure.tools.logging :as log]
             [me.raynes.fs :as fs]
+            [clj-time.core :as time]
             [whisper2cyanite.logging :as wlog]
             [whisper2cyanite.utils :as utils]
             [whisper2cyanite.metric-store :as mstore]
@@ -317,9 +319,26 @@
       (log-error-files title files)
       (swap! error-files set/union @error-files files))))
 
+(defn- show-duration
+  "Show duration."
+  [interval]
+  ;; https://stackoverflow.com/questions/3471397/pretty-print-duration-in-java
+  (let [formatter (-> (PeriodFormatterBuilder.)
+                      (.appendDays) (.appendSuffix "d ")
+                      (.appendHours) (.appendSuffix "h ")
+                      (.appendMinutes) (.appendSuffix "m ")
+                      (.appendSeconds) (.appendSuffix "s")
+                      (.toFormatter))
+        duration-pp (.print formatter (.toPeriod interval))
+        duration-sec (.getSeconds (.toStandardSeconds (.toDuration interval)))
+        duration-str (format "Duration: %s (%ss)" duration-pp duration-sec)]
+    (log/info duration-str)
+    (newline)
+    (println duration-str)))
+
 (defn- show-stats
   "Show stats."
-  [mstore pstore options]
+  [mstore pstore interval options]
   (let [mstore-stats (if (and mstore (not= mstore :true))
                        (mstore/get-stats mstore) nil)
         pstore-stats (if pstore (pstore/get-stats pstore) nil)
@@ -340,7 +359,8 @@
                       (str "Files during processing which errors occurred "
                            "in the path store") error-files)
     (when errors-file
-      (dump-error-files errors-file @error-files))))
+      (dump-error-files errors-file @error-files)))
+  (show-duration interval))
 
 (defn- shutdown
   "Shutdown."
@@ -357,7 +377,8 @@
   (try
     (log/info starting-str)
     (wlog/info start-title)
-    (let [[root-dir files] (get-root-dir-and-files source options)
+    (let [start-time (time/now)
+          [root-dir files] (get-root-dir-and-files source options)
           files-count (count files)
           {:keys [from to]} (get-from-to options)
           jobs (:jobs options default-jobs)
@@ -387,7 +408,8 @@
           (wlog/unhandled-error e))
         (finally
           (shutdown mstore pstore)
-          (show-stats mstore pstore options))))
+          (show-stats mstore pstore (time/interval start-time (time/now))
+                      options))))
     (catch Exception e
       (wlog/unhandled-error e))))
 
