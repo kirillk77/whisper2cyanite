@@ -331,7 +331,9 @@
                       (.toFormatter))
         duration-pp (.print formatter (.toPeriod interval))
         duration-sec (.getSeconds (.toStandardSeconds (.toDuration interval)))
-        duration-str (format "Duration: %ss (%s)" duration-sec duration-pp)]
+        duration-str (format "Duration: %ss%s" duration-sec
+                             (if (duration-sec > 59)
+                               (format " (%s)" duration-pp) ""))]
     (log/info duration-str)
     (newline)
     (println duration-str)))
