@@ -12,6 +12,62 @@
 (def cli-commands #{"migrate" "validate" "calc-size" "list-files" "list-paths"
                     "info" "fetch" "help"})
 
+(declare parse-rollups check-rollups)
+
+(def cli-options
+  [["-f" "--from FROM" "From time (Unix epoch)"
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(<= 0 %) "Must be a number >= 0"]]
+   ["-t" "--to TO" "To time (Unix epoch)"
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 %) "Must be a number > 0"]]
+   ["-r" "--run" "Force normal run (dry run using on default)"]
+   ["-R" "--rollups ROLLUPS"
+    "Define rollups. Format: <seconds_per_point[:retention],...> Example: 60,300:31536000"
+    :parse-fn #(parse-rollups %)
+    :validate [check-rollups "Invalid rollup"]]
+   ["-j" "--jobs JOBS" "Number of jobs to run simultaneously"
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 %) "Must be a number > 0"]]
+   ["-T" "--min-ttl TTL" (str "Minimal TTL. Default: " core/default-min-ttl)
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 %) "Must be a number > 0"]]
+   ["-D" "--root-dir DIRECTORY" "Root directory"]
+   [nil "--cassandra-keyspace KEYSPACE"
+    (str "Cassandra keyspace. Default: " mstore/default-cassandra-keyspace)]
+   ["-O" "--cassandra-options OPTIONS"
+    "Cassandra options. Example: \"{:compression :lz4}\""
+    :parse-fn #(read-string %)
+    :validate [#(= clojure.lang.PersistentArrayMap (type %))]]
+   [nil "--cassandra-channel-size SIZE"
+    (str "Cassandra channel size in points. Default: "
+         mstore/default-cassandra-channel-size)
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 %) "Must be a number > 0"]]
+   [nil "--cassandra-batch-size SIZE"
+    (str "Cassandra batch size. Default: " mstore/default-cassandra-batch-size)
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 %) "Must be a number > 0"]]
+   [nil "--cassandra-batch-rate RATE" "Cassandra batch rate (batches per second, 1-100)"
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 % 101) "Must be a number between 1-100"]]
+   [nil "--disable-metric-store" "Disable writing to metric store"]
+   [nil "--elasticsearch-index INDEX"
+    (str "Elasticsearch index. Default: " pstore/default-es-index)]
+   [nil "--disable-path-store" "Disable writing to path store"]
+   ["-l" "--log-file FILE" (str "Log file. Default: " wlog/default-log-file)]
+   ["-L" "--log-level LEVEL"
+    (str "Log level (all, trace, debug, info, warn, error, fatal, off). "
+         "Default: " wlog/default-log-level)
+    :validate [#(or (= (count %) 0)
+                    (not= (get logconfig/levels % :not-found) :not-found))
+               "Invalid log level"]]
+   ["-e" "--errors-file FILE"
+    (str "Dump a list of files during processing which errors occurred")]
+   ["-S" "--stop-on-error" "Stop on first non-fatal error"]
+   ["-P" "--disable-progress" "Disable progress bar"]
+   ["-h" "--help" "Show this help"]])
+
 (defn- check-rollups
   "Check rollups."
   [rollups]
@@ -172,60 +228,6 @@
   "Run command 'help'."
   [command arguments options summary]
   (exit 0 (usage summary)))
-
-(def cli-options
-  [["-f" "--from FROM" "From time (Unix epoch)"
-    :parse-fn #(Integer/parseInt %)
-    :validate [#(<= 0 %) "Must be a number >= 0"]]
-   ["-t" "--to TO" "To time (Unix epoch)"
-    :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %) "Must be a number > 0"]]
-   ["-r" "--run" "Force normal run (dry run using on default)"]
-   ["-R" "--rollups ROLLUPS"
-    "Define rollups. Format: <seconds_per_point[:retention],...> Example: 60,300:31536000"
-    :parse-fn #(parse-rollups %)
-    :validate [check-rollups "Invalid rollup"]]
-   ["-j" "--jobs JOBS" "Number of jobs to run simultaneously"
-    :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %) "Must be a number > 0"]]
-   ["-T" "--min-ttl TTL" (str "Minimal TTL. Default: " core/default-min-ttl)
-    :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %) "Must be a number > 0"]]
-   ["-D" "--root-dir DIRECTORY" "Root directory"]
-   [nil "--cassandra-keyspace KEYSPACE"
-    (str "Cassandra keyspace. Default: " mstore/default-cassandra-keyspace)]
-   ["-O" "--cassandra-options OPTIONS"
-    "Cassandra options. Example: \"{:compression :lz4}\""
-    :parse-fn #(read-string %)
-    :validate [#(= clojure.lang.PersistentArrayMap (type %))]]
-   [nil "--cassandra-channel-size SIZE"
-    (str "Cassandra channel size in points. Default: "
-         mstore/default-cassandra-channel-size)
-    :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %) "Must be a number > 0"]]
-   [nil "--cassandra-batch-size SIZE"
-    (str "Cassandra batch size. Default: " mstore/default-cassandra-batch-size)
-    :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %) "Must be a number > 0"]]
-   [nil "--cassandra-batch-rate RATE" "Cassandra batch rate (batches per second, 1-100)"
-    :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 % 101) "Must be a number between 1-100"]]
-   [nil "--disable-metric-store" "Disable writing to metric store"]
-   [nil "--elasticsearch-index INDEX"
-    (str "Elasticsearch index. Default: " pstore/default-es-index)]
-   [nil "--disable-path-store" "Disable writing to path store"]
-   ["-l" "--log-file FILE" (str "Log file. Default: " wlog/default-log-file)]
-   ["-L" "--log-level LEVEL"
-    (str "Log level (all, trace, debug, info, warn, error, fatal, off). "
-         "Default: " wlog/default-log-level)
-    :validate [#(or (= (count %) 0)
-                    (not= (get logconfig/levels % :not-found) :not-found))
-               "Invalid log level"]]
-   ["-e" "--errors-file FILE"
-    (str "Dump a list of files during processing which errors occurred")]
-   ["-S" "--stop-on-error" "Stop on first non-fatal error"]
-   ["-P" "--disable-progress" "Disable progress bar"]
-   ["-h" "--help" "Show this help"]])
 
 (defn- run-command
   "Run command."
