@@ -361,10 +361,10 @@ whisper2cyanite list-paths /var/lib/whisper/
 #### Estimating Cassandra Data Size from a Whisper Database
 
 Estimating Cassandra data size from a Whisper database located in the
-`/srv/cassandra/data/adnetik/whisper/` directory:
+`/var/lib/whisper/` directory:
 
 ```bash
-whisper2cyanite calc-size --jobs 8 /srv/cassandra/data/adnetik/whisper/ 'my_tenant'
+whisper2cyanite calc-size --jobs 8 /var/lib/whisper/ 'my_tenant'
 ```
 
 Using 8 jobs to speed up the process. Tenant is named as `my_tenant`.
