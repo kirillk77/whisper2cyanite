@@ -19,7 +19,7 @@ whisper2cyanite is a tool for migrating data from
   * [Options](#options)
 * [Usage Scenarios](#usage-scenarios)
   * [Inspecting](#inspecting)
-    * [Listing Whisper Database Files](#listing-whisper-database-files)
+    * [Listing Paths from a Whisper Database](#listing-paths-from-a-whisper-database)
     * [Estimating Cassandra Data Size from a Whisper Database](#estimating-cassandra-data-size-from-a-whisper-database)
     * [Getting Info About a Whisper Database File](#getting-info-about-a-whisper-database-file)
     * [Fetching Timeseries from a Whisper Database File for a Predetermined Period](#fetching-timeseries-from-a-whisper-database-file-for-a-predetermined-period)
@@ -350,9 +350,12 @@ Stop on the first non-fatal error.
 
 ### Inspecting
 
-#### Listing Whisper Database Files
+#### Listing Paths from a Whisper Database
+
+Listing paths taken from the `/var/lib/whisper/` directory in alphabet order:
 
 ```bash
+whisper2cyanite list-paths /var/lib/whisper/
 ```
 
 #### Estimating Cassandra Data Size from a Whisper Database
@@ -362,7 +365,31 @@ Stop on the first non-fatal error.
 
 #### Getting Info About a Whisper Database File
 
+Getting info about the `/var/lib/whisper/requests/nginx/access.wsp` Whisper database file
+
 ```bash
+whisper2cyanite info /var/lib/whisper/requests/nginx/access.wsp
+```
+
+Sample output:
+
+```
+Aggregation method: average
+Max retention:      31536000
+X files factor:     0.5
+Archives:
+  Archive 0:
+    Seconds per point: 60
+    Retention:         5356800
+    Points:            89280
+    Offset:            40
+    Size:              1071360
+  Archive 1:
+    Seconds per point: 900
+    Retention:         31536000
+    Points:            35040
+    Offset:            1071400
+    Size:              420480
 ```
 
 #### Fetching Timeseries from a Whisper Database File for a Predetermined Period
