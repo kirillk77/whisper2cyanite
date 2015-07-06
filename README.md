@@ -161,6 +161,8 @@ Show help.
 
 ### Options
 
+* [cassandra-batch-rate](#cassandra-batch-rate)
+* [cassandra-batch-size](#cassandra-batch-size)
 * [cassandra-channel-size](#cassandra-channel-size)
 * [cassandra-keyspace](#cassandra-keyspace)
 * [cassandra-options](#cassandra-options)
@@ -171,6 +173,7 @@ Show help.
 * [elasticsearch-index](#elasticsearch-index)
 * [errors-file](#errors-file)
 * [from](#from)
+* [help](#help)
 * [jobs](#jobs)
 * [log-file](#log-file)
 * [log-level](#log-level)
@@ -181,13 +184,29 @@ Show help.
 * [stop-on-error](#stop-on-error)
 * [to](#to)
 
+#### `cassandra-batch-rate`
+
+`--cassandra-batch-rate` `RATE`
+
+Set the Cassandra batch rate (batches per second, 1-100).
+
+Throttling is not used by default.
+
+#### `cassandra-batch-size`
+
+`--cassandra-batch-size` `SIZE`
+
+Set the Cassandra batch size in points.
+
+Default: 1000
+
 #### `cassandra-channel-size`
 
 `--cassandra-channel-size` `SIZE`
 
-Set the Cassandra channel size.
+Set the Cassandra channel size in points.
 
-Default: `10000`
+Default: `500000`
 
 #### `cassandra-keyspace`
 
@@ -209,13 +228,13 @@ Example: "{:compression :lz4}"
 
 `--disable-metric-store`
 
-Disable writing to the metric store
+Disable writing to the metric store.
 
 #### `disable-path-store`
 
 `--disable-path-store`
 
-Disable writing to the path store
+Disable writing to the path store.
 
 #### `disable-progress`
 
