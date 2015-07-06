@@ -207,7 +207,7 @@
     (str "Cassandra batch size. Default: " mstore/default-cassandra-batch-size)
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 %) "Must be a number > 0"]]
-   [nil "--cassandra-batch-rate RATE" "Cassandra batch rate (batches per second)"
+   [nil "--cassandra-batch-rate RATE" "Cassandra batch rate (batches per second, 1-100)"
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 % 101) "Must be a number between 1-100"]]
    [nil "--disable-metric-store" "Disable writing to metric store"]
