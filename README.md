@@ -86,7 +86,9 @@ Migrate a Whisper database to a metric store, a path store or both.
 
 Arguments: `source`, `tenant`, `cassandra-host(s)`, `elasticsearch-url`.
 
-Available options: [`cassandra-channel-size`](#cassandra-channel-size),
+Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
+[`cassandra-batch-size`](#cassandra-batch-size),
+[`cassandra-channel-size`](#cassandra-channel-size),
 [`cassandra-keyspace`](#cassandra-keyspace),
 [`cassandra-options`](#cassandra-options), [`disable-log`](#disable-log),
 [`disable-metric-store`](#disable-metric-store),
