@@ -200,7 +200,7 @@ Throttling is not used by default.
 
 Set the Cassandra batch size in points.
 
-Default: 1000
+Default: `1000`
 
 #### `cassandra-channel-size`
 
