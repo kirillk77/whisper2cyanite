@@ -1,6 +1,7 @@
 # whisper2cyanite
 
 [![Build Status](https://travis-ci.org/cybem/whisper2cyanite.svg?branch=master)](https://travis-ci.org/cybem/whisper2cyanite)
+[![Dependencies Status](http://jarkeeper.com/cybem/whisper2cyanite/status.svg)](http://jarkeeper.com/cybem/whisper2cyanite)
 
 whisper2cyanite is a tool for migrating data from
 [Whisper](https://github.com/graphite-project/whisper) to
