@@ -14,8 +14,8 @@ whisper2cyanite is a tool for migrating data from
   * [Building a Deb-package](#building-a-deb-package)
 * [Usage](#usage)
   * [Quick Help](#quick-help)
-  * [Arguments](#arguments)
   * [Commands](#commands)
+  * [Arguments](#arguments)
   * [Options](#options)
 * [Usage Scenarios](#usage-scenarios)
   * [Inspecting](#inspecting)
@@ -75,30 +75,6 @@ Built package will be placed in the `target` directory.
     whisper2cyanite info <whisper_file>
     whisper2cyanite [options] fetch <whisper_file> <rollup>
     whisper2cyanite help
-
-### Arguments
-
-* [directory](#directory)
-* [whisper_file](#whisper_file)
-* [filelist_file](#filelist_file)
-* [tenant](#tenant)
-* [cassandra_host(s)](#cassandra_hosts)
-* [elasticsearch_url](#elasticsearch_url)
-* [rollup](#rollup)
-
-#### `directory`
-
-#### `whisper_file`
-
-#### `filelist_file`
-
-#### `tenant`
-
-#### `cassandra_host(s)`
-
-#### `elasticsearch_url`
-
-#### `rollup`
 
 ### Commands
 
@@ -200,6 +176,30 @@ Available options: [`from`](#from),
 #### `help`
 
 Show help.
+
+### Arguments
+
+* [directory](#directory)
+* [whisper_file](#whisper_file)
+* [filelist_file](#filelist_file)
+* [tenant](#tenant)
+* [cassandra_host(s)](#cassandra_hosts)
+* [elasticsearch_url](#elasticsearch_url)
+* [rollup](#rollup)
+
+#### `directory`
+
+#### `whisper_file`
+
+#### `filelist_file`
+
+#### `tenant`
+
+#### `cassandra_host(s)`
+
+#### `elasticsearch_url`
+
+#### `rollup`
 
 ### Options
 
