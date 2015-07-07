@@ -348,7 +348,7 @@ Default: `3600`
 
 Define rollups.
 
-Format: <seconds_per_point[:retention],...>
+Format: \<seconds_per_point\[:retention\],...\>
 
 Example: 60,300:31536000
 
