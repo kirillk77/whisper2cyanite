@@ -161,7 +161,7 @@
         points)
       (process-path [this path file])
       (fetch-data? [this]
-        false))))
+        true))))
 
 (defn- process-archive
   "Process an archive."
