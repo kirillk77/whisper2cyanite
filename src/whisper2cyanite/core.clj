@@ -161,7 +161,7 @@
         points)
       (process-path [this path file])
       (fetch-data? [this]
-        true))))
+        false))))
 
 (defn- process-archive
   "Process an archive."
@@ -170,10 +170,11 @@
         points (:points archive)
         period (if retention (/ retention rollup) points)
         retention (if retention retention (* rollup points))
-        data (if (fetch-data? processor)
+        fetch? (fetch-data? processor)
+        data (if fetch?
                (whisper/fetch-archive-seq-ra ra-file file archive from to) nil)
         series (if data (whisper/remove-nulls (:series data)) nil)]
-    (when (not-empty series)
+    (when (or (not-empty series) (not fetch?))
       (process-metrics processor rollup period retention points path
                        file series))))
 
