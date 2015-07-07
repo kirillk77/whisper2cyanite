@@ -405,7 +405,8 @@ Fetch timeseries between `1428407040` (07 Apr 2015 11:44:00 GMT) and
 `/var/lib/whisper/requests/nginx/access.wsp` Whisper database file:
 
 ```bash
-whisper2cyanite --from 1428407040 --to 1433757900 fetch /var/lib/whisper/requests/nginx/access.wsp 60
+whisper2cyanite --from 1428407040 --to 1433757900 fetch \
+  /var/lib/whisper/requests/nginx/access.wsp 60
 ```
 
 ### Migrating
