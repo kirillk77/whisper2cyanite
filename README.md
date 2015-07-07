@@ -69,6 +69,14 @@ Built package will be placed in the `target` directory.
 
 ### Arguments
 
+* [directory](#directory)
+* [whisper_file](#whisper_file)
+* [filelist_file](#filelist_file)
+* [tenant](#tenant)
+* [cassandra_host(s)](#cassandra_hosts)
+* [elasticsearch_url](#elasticsearch_url)
+* [rollup](#rollup)
+
 ### Commands
 
 * [migrate](#migrate)
@@ -162,6 +170,8 @@ Available options: [`from`](#from),
 Show help.
 
 ### Options
+
+Options in alphabet order:
 
 * [cassandra-batch-rate](#cassandra-batch-rate)
 * [cassandra-batch-size](#cassandra-batch-size)
