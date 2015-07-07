@@ -221,6 +221,8 @@ Example: http://es.example.org:9200
 
 #### `rollup`
 
+A rollup (seconds per data point).
+
 Example: 60
 
 ### Options
