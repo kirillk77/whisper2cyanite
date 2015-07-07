@@ -131,7 +131,10 @@ Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 Validate a metric store, a path store or both, comparing points and paths from
 a Whisper database and Cyanite storages.
 
-Arguments: `source`, `tenant`, `cassandra-host(s)`, `elasticsearch-url`.
+Arguments: [`directory`](#directory) or [`whisper_file`](#whisper_file) or
+[`filelist_file`](#filelist_file), [`tenant`](#tenant),
+[`cassandra_host(s)`](#cassandra_hosts),
+[`elasticsearch_url`](#elasticsearch_url).
 
 Available options: [`cassandra-keyspace`](#cassandra-keyspace),
 [`cassandra-options`](#cassandra-options), [`disable-log`](#disable-log),
@@ -147,7 +150,8 @@ Available options: [`cassandra-keyspace`](#cassandra-keyspace),
 
 Calculate Cassandra data size from a Whisper database.
 
-Arguments: `source`, `tenant`.
+Arguments: [`directory`](#directory) or [`whisper_file`](#whisper_file) or
+[`filelist_file`](#filelist_file), [`tenant`](#tenant).
 
 Available options: [`disable-progress`](#disable-progress), [`jobs`](#jobs),
 [`rollups`](#rollups), [`root-dir`](#root-dir).
@@ -156,20 +160,22 @@ Available options: [`disable-progress`](#disable-progress), [`jobs`](#jobs),
 
 List Whisper database files taken from a `source`.
 
-Arguments: `source`.
+Arguments: [`directory`](#directory) or [`whisper_file`](#whisper_file) or
+[`filelist_file`](#filelist_file).
 
 #### `list-paths`
 
 List paths taken from a `source`. The `root-dir` option can be passed to have
 correct paths being computed from filenames.
 
-Arguments: `source`.
+Arguments: [`directory`](#directory) or [`whisper_file`](#whisper_file) or
+[`filelist_file`](#filelist_file).
 
 Available options: [`root-dir`](#root-dir).
 
 #### `info`
 
-Arguments: `wsp-file`.
+Arguments: [`whisper_file`](#whisper_file).
 
 Show Whisper database file information.
 
@@ -177,7 +183,7 @@ Show Whisper database file information.
 
 Fetch timeseries from a Whisper database file.
 
-Arguments: `wsp-file`.
+Arguments: [`whisper_file`](#whisper_file).
 
 Available options: [`from`](#from),
 [`to`](#to).
