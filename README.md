@@ -77,6 +77,20 @@ Built package will be placed in the `target` directory.
 * [elasticsearch_url](#elasticsearch_url)
 * [rollup](#rollup)
 
+#### `directory`
+
+#### `whisper_file`
+
+#### `filelist_file`
+
+#### `tenant`
+
+#### `cassandra_host(s)`
+
+#### `elasticsearch_url`
+
+#### `rollup`
+
 ### Commands
 
 * [migrate](#migrate)
@@ -92,7 +106,10 @@ Built package will be placed in the `target` directory.
 
 Migrate a Whisper database to a metric store, a path store or both.
 
-Arguments: `source`, `tenant`, `cassandra-host(s)`, `elasticsearch-url`.
+Arguments: [`directory`](#directory) or [`whisper_file`](#whisper_file) or
+[`filelist_file`](#filelist_file), [`tenant`](#tenant),
+[`cassandra_host(s)`](#cassandra_hosts),
+[`elasticsearch_url`](#elasticsearch_url).
 
 Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 [`cassandra-batch-size`](#cassandra-batch-size),
