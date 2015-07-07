@@ -189,17 +189,33 @@ Show help.
 
 #### `directory`
 
+A directory where Whisper database files are located.
+
 #### `whisper_file`
+
+A Whisper database file (`.wsp`).
 
 #### `filelist_file`
 
 #### `tenant`
 
+A tenant name.
+
 #### `cassandra_host(s)`
+
+A comma-separated list of Cassandra hosts.
+
+Example: cass1.example.org,cass2.example.org
 
 #### `elasticsearch_url`
 
+An Elasticsearch host URL.
+
+Example: http://es.example.org:9200
+
 #### `rollup`
+
+Example: 60
 
 ### Options
 
