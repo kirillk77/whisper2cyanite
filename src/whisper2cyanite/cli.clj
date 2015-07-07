@@ -84,7 +84,7 @@
 (defn- usage
   "Construct usage message."
   [options-summary]
-  (->> ["Whisper to Cyanite data migration tool"
+  (->> ["A Whisper to Cyanite data migration tool"
         ""
         "Usage: "
         "  whisper2cyanite [options] migrate <directory | whisper_file | filelist_file> <tenant> <cassandra_host,...> <elasticsearch_url>"
