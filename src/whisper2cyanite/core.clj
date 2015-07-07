@@ -448,7 +448,7 @@
   (newline)
   (println "Estimated Cassandra data size:"
            (humanize/filesize @cassandra-data-size))
-  (println "Number of points:" @points-count)
+  (println "Number of points:" (str @points-count))
   (println "Don't forget to multiply size by replication factor!")
   (wlog/exit 0))
 
