@@ -67,7 +67,7 @@ Built package will be placed in the `target` directory.
 
 ### Quick Help
 
-    whisper2cyanite [options](#options) migrate <directory | whisper_file | filelist_file> <tenant> <cassandra_host,...> <elasticsearch_url>
+    whisper2cyanite [options] migrate <directory | whisper_file | filelist_file> <tenant> <cassandra_host,...> <elasticsearch_url>
     whisper2cyanite [options] validate <directory | whisper_file | filelist_file> <tenant> <cassandra_host,...> <elasticsearch_url>
     whisper2cyanite [options] calc-size <directory | whisper_file | filelist_file> <tenant>
     whisper2cyanite list-files <directory>
