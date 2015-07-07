@@ -1,4 +1,4 @@
-(defproject whisper2cyanite "0.5.0"
+(defproject whisper2cyanite "0.9.1-SNAPSHOT"
   :description "Whisper to Cyanite data migration tool."
   :url "https://github.com/cybem/whisper2cyanite"
   :license {:name "MIT License"
@@ -15,7 +15,10 @@
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [clojurewerkz/elastisch "2.1.0"]
                  [com.climate/claypoole "0.4.0"]
-                 [intervox/clj-progress "0.1.6"]]
+                 [me.raynes/fs "1.4.6"]
+                 [throttler "1.0.0"]
+                 [intervox/clj-progress "0.1.6"]
+                 [clojure-humanize "0.1.0"]]
   :main ^:skip-aot whisper2cyanite.cli
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})

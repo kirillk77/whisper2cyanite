@@ -1,16 +1,19 @@
 (ns whisper2cyanite.core
-  (:import (java.io RandomAccessFile))
+  (:import (java.io RandomAccessFile)
+           (org.joda.time.format PeriodFormatterBuilder))
   (:require [clj-whisper.core :as whisper]
             [clojure.string :as str]
             [clojure.set :as set]
             [com.climate.claypoole :as cp]
-            [clojure.java.io :as io]
             [clj-progress.core :as prog]
+            [clojure.contrib.humanize :as humanize]
             [clojure.tools.logging :as log]
+            [me.raynes.fs :as fs]
+            [clj-time.core :as time]
+            [whisper2cyanite.logging :as wlog]
             [whisper2cyanite.utils :as utils]
             [whisper2cyanite.metric-store :as mstore]
-            [whisper2cyanite.path-store :as pstore]
-            [whisper2cyanite.logging :as wlog]))
+            [whisper2cyanite.path-store :as pstore]))
 
 (def ^:const default-jobs 1)
 (def ^:const default-min-ttl 3600)
@@ -23,9 +26,15 @@
 (def mstore-error-files (atom (sorted-set)))
 (def pstore-error-files (atom (sorted-set)))
 
+(def cassandra-data-size (atom 0))
+(def points-count (atom 0))
+
+(def starting-str "==================== Starting ====================")
+
 (defprotocol Processor
-  (process-metrics [this rollup period retention path file series])
-  (process-path [this path file]))
+  (process-metrics [this rollup period retention points path file series])
+  (process-path [this path file])
+  (fetch-data? [this]))
 
 (defn- calc-ttl
   "Calc a TTL value."
@@ -42,23 +51,31 @@
 (defn- migrator
   "Migrator."
   [mstore pstore options tenant]
-  (let [run (:run options false)
-        min-ttl (:min-ttl options default-min-ttl)]
+  (let [min-ttl (:min-ttl options default-min-ttl)]
     (reify
       Processor
-      (process-metrics [this rollup period retention path file series]
-        (doseq [point series]
-          (let [time (first point)
-                value (last point)
-                ttl (calc-ttl time retention)]
-            (when (> ttl min-ttl)
-              (log-point "Migrating point" rollup period path time value ttl)
-              (when run
-                (mstore/insert mstore tenant rollup period path time value
-                               ttl file))))))
+      (process-metrics [this rollup period retention points path file series]
+        (let [points-processed (atom 0)
+              series-ttl (->> series
+                              (map #(let [time (first %)
+                                          value (last %)
+                                          ttl (calc-ttl time retention)]
+                                      (if (> ttl min-ttl)
+                                        (do (log-point "Migrating point" rollup
+                                                       period path time value ttl)
+                                            [time value ttl])
+                                        nil)))
+                              (remove nil?))]
+          (swap! points-processed + (count series-ttl))
+          (mstore/insert mstore tenant rollup period path series-ttl file)
+          (log/debug (format (str "Metric migrated: path %s, rollup %s, "
+                                  "period: %s, points migrated: %s") file
+                                  rollup period @points-processed))
+          @points-processed))
       (process-path [this path file]
-        (when run
-          (pstore/insert pstore tenant path file))))))
+        (pstore/insert pstore tenant path file))
+      (fetch-data? [this]
+        true))))
 
 (defn- validate-value
   "Validate a value."
@@ -68,8 +85,8 @@
         err (format
              (str "Metric store validation. "
                   "%s: rollup: %s, period: %s, path: %s, time: %s, "
-                  "whisper value: %s, store value %s")
-             msg rollup period path time w-value s-value)]
+                  "whisper value: %s, store value: %s")
+             msg rollup period path time w-value (str s-value))]
     (when-not valid?
       (if-not @error-reported?
         (do
@@ -82,36 +99,69 @@
 (defn- validator
   "Validator."
   [mstore pstore options tenant]
-  (let [min-ttl (:min-ttl options default-min-ttl)]
+  (let [min-ttl (:min-ttl options default-min-ttl)
+        validators [[#(not= %2 nil) "Point not found"]
+                    [#(= (count %2) 1) "Array size is not equal to 1"]
+                    [#(= %1 (first %2)) "Values are not equal"]]
+        points-processed (atom 0)]
     (reify
       Processor
-      (process-metrics [this rollup period retention path file series]
+      (process-metrics [this rollup period retention points path file series]
         (let [series (whisper/sort-series series)
-              from (first (first series))
-              to (first (last series))
-              mstore-series (mstore/fetch-series mstore tenant rollup period path
-                                                 from to file)
+              times (map first series)
+              from (apply min times)
+              to (apply max times)
               error-reported? (atom false)
-              validators [[#(not= %2 nil) "Point not found"]
-                          [#(sequential? %2) "Value is not an array"]
-                          [#(= (count %2) 1) "Array size is not equal to 1"]
-                          [#(= %1 (first %2)) "Values are not equal"]]]
-          (doseq [point series]
-            (let [time (first point)
-                  w-value (last point)
-                  ttl (calc-ttl time retention)]
-              (when (> ttl min-ttl)
-                (log-point "Validating point" rollup period path time w-value ttl)
-                (let [s-value (get mstore-series time)]
-                  (every? #(validate-value rollup period path time w-value
-                                           s-value (first %) (second %)
-                                           error-reported? mstore-error-files
-                                           file)
-                          validators)))))))
+              mstore-series (mstore/fetch-series mstore tenant rollup period path
+                                                 from to file)]
+          (when (not= mstore-series :mstore-error)
+            (doseq [point series]
+              (let [time (first point)
+                    w-value (last point)
+                    ttl (calc-ttl time retention)]
+                (when (> ttl min-ttl)
+                  (log-point "Validating point" rollup period path time
+                             w-value ttl)
+                  (let [s-value (get mstore-series time)]
+                    (every? #(validate-value rollup period path time w-value
+                                             s-value (first %) (second %)
+                                             error-reported? mstore-error-files
+                                             file)
+                            validators))))))))
       (process-path [this path file]
-        (when-not (pstore/exist? pstore tenant path file)
-          (swap! pstore-error-files conj file)
-          (wlog/error "Path not found in the path store: " path))))))
+        (let [ret (pstore/exist? pstore tenant path file)]
+          (when (and (not= ret :pstore-error) (not ret))
+            (swap! pstore-error-files conj file)
+            (wlog/error (str "Path not found in the path store: " path)))))
+      (fetch-data? [this]
+        true))))
+
+(defn- calculator
+  "Cassandra data size calculator."
+  [mstore pstore options tenant]
+  (let [period-size 4
+        rollup-size 4
+        tenant-size (count tenant)
+        time-size 8
+        data-size 8
+        row-overhead 23
+        key-overhead 32
+        row-size (+ data-size row-overhead)
+        part-key-size-const (+ period-size rollup-size tenant-size)
+        clust-col-size (+ time-size key-overhead)]
+    (reify
+      Processor
+      (process-metrics [this rollup period retention points path file series]
+        (let [part-key-size (+ part-key-size-const (count path))
+              index-size (+ part-key-size (* clust-col-size points))
+              rows-size (* row-size points)
+              archive-size (+ index-size rows-size)]
+          (swap! cassandra-data-size + archive-size)
+          (swap! points-count + points))
+        points)
+      (process-path [this path file])
+      (fetch-data? [this]
+        false))))
 
 (defn- process-archive
   "Process an archive."
@@ -120,9 +170,12 @@
         points (:points archive)
         period (if retention (/ retention rollup) points)
         retention (if retention retention (* rollup points))
-        data (whisper/fetch-archive-seq-ra ra-file file archive from to)
-        series (whisper/remove-nulls (:series data))]
-    (process-metrics processor rollup period retention path file series)))
+        data (if (fetch-data? processor)
+               (whisper/fetch-archive-seq-ra ra-file file archive from to) nil)
+        series (if data (whisper/remove-nulls (:series data)) nil)]
+    (when (not-empty series)
+      (process-metrics processor rollup period retention points path
+                       file series))))
 
 (defn- process-file
   "Process a file."
@@ -149,15 +202,10 @@
           (finally
             (.close ra-file)))))))
 
-(defn- is-whisper?
-  "Is the file a Whisper database?"
-  [file]
-  (= (utils/extract-extension file) ".wsp" ))
-
 (defn- get-paths-from-file
   "Get paths form a file."
   [file]
-  (if (is-whisper? file)
+  (if (utils/whisper? file)
     [file]
     (do
       (wlog/info (str "Loading paths from file: " file))
@@ -166,7 +214,7 @@
 (defn- get-paths
   "Get paths."
   [source]
-  (let [is-dir? (utils/is-directory? source)
+  (let [is-dir? (fs/directory? source)
         paths (if is-dir?
                 (whisper/get-paths source)
                 (get-paths-from-file source))]
@@ -178,7 +226,7 @@
         (prog/set-progress-bar! "[:bar] :done")
         (prog/config-progress-bar! :width pbar-width)
         (prog/init 0)
-        (doseq [path paths]
+        (doseq [_ paths]
           (prog/tick))
         (prog/done)))
     (wlog/info (format "Found %s paths" (count paths)))
@@ -187,25 +235,34 @@
 (defn- get-root-dir
   "Get root directory."
   [source options]
-  (let [dir (utils/extract-directory (utils/get-cpath source))
+  (let [dir (utils/extract-directory (fs/normalized source))
         root-dir (:root-dir options nil)]
     (if-not root-dir
       dir
-      (let [root-dir-c (utils/get-cpath root-dir)]
+      (let [root-dir-c (fs/normalized root-dir)]
         (when (or (> (count root-dir-c) (count dir))
                   (not= (subs dir 0 (count root-dir-c)) root-dir-c))
           (throw (Exception. (str "Invalid root directory: " root-dir))))
         root-dir-c))))
 
+(defn- get-root-dir-and-files
+  [source options]
+  (if (or (fs/directory? source) (utils/whisper? source))
+    [(get-root-dir source options) (get-paths source)]
+    (let [files (get-paths source)]
+      [(get-root-dir (first files) options) files])))
+
 (defn- create-mstore
   "Create a metric store."
   [cass-host options]
-  (if-not (:disable-metric-store options false)
-    (try
-      (mstore/cassandra-metric-store cass-host options)
-      (catch Exception e
-        (wlog/fatal "Error creating metric store: " e)))
-    nil))
+  (if-not (= cass-host :true)
+    (if-not (:disable-metric-store options false)
+      (try
+        (mstore/cassandra-metric-store cass-host options)
+        (catch Exception e
+          (wlog/fatal (str "Error creating metric store: " e) e)))
+      nil)
+    :true))
 
 (defn- create-pstore
   "Create a path store."
@@ -214,7 +271,7 @@
     (try
       (pstore/elasticsearch-metric-store es-url options)
       (catch Exception e
-        (wlog/fatal "Error creating path store: " e)))
+        (wlog/fatal (str "Error creating path store: " e) e)))
     nil))
 
 (defn- get-from-to
@@ -251,7 +308,7 @@
   [file error-files]
   (when (> (count error-files) 0)
     (wlog/info (str "Dumping a list of files during processing which errors "
-                    "occurred to the file: ") file)
+                    "occurred to the file: " file))
     (spit file (str/join "\n" error-files))))
 
 (defn- show-error-files
@@ -262,10 +319,30 @@
       (log-error-files title files)
       (swap! error-files set/union @error-files files))))
 
+(defn- show-duration
+  "Show duration."
+  [interval]
+  ;; https://stackoverflow.com/questions/3471397/pretty-print-duration-in-java
+  (let [formatter (-> (PeriodFormatterBuilder.)
+                      (.appendDays) (.appendSuffix "d ")
+                      (.appendHours) (.appendSuffix "h ")
+                      (.appendMinutes) (.appendSuffix "m ")
+                      (.appendSeconds) (.appendSuffix "s")
+                      (.toFormatter))
+        duration-pp (.print formatter (.toPeriod interval))
+        duration-sec (.getSeconds (.toStandardSeconds (.toDuration interval)))
+        duration-str (format "Duration: %ss%s" duration-sec
+                             (if (> duration-sec 59)
+                               (format " (%s)" duration-pp) ""))]
+    (log/info duration-str)
+    (newline)
+    (println duration-str)))
+
 (defn- show-stats
   "Show stats."
-  [mstore pstore options]
-  (let [mstore-stats (if mstore (mstore/get-stats mstore) nil)
+  [mstore pstore interval options]
+  (let [mstore-stats (if (and mstore (not= mstore :true))
+                       (mstore/get-stats mstore) nil)
         pstore-stats (if pstore (pstore/get-stats pstore) nil)
         errors-file (:errors-file options)
         error-files (atom #{})]
@@ -284,12 +361,13 @@
                       (str "Files during processing which errors occurred "
                            "in the path store") error-files)
     (when errors-file
-      (dump-error-files errors-file @error-files))))
+      (dump-error-files errors-file @error-files)))
+  (show-duration interval))
 
 (defn- shutdown
   "Shutdown."
   [mstore pstore]
-  (when mstore
+  (when (and mstore (not= mstore :true))
     (mstore/shutdown mstore))
   (when pstore
     (pstore/shutdown pstore)))
@@ -299,10 +377,11 @@
   [source tenant cass-host es-url options processor-fn start-title title]
   (wlog/set-logging! options)
   (try
+    (log/info starting-str)
     (wlog/info start-title)
-    (let [files (get-paths source)
+    (let [start-time (time/now)
+          [root-dir files] (get-root-dir-and-files source options)
           files-count (count files)
-          root-dir (get-root-dir (first files) options)
           {:keys [from to]} (get-from-to options)
           jobs (:jobs options default-jobs)
           pool (cp/threadpool jobs)
@@ -310,7 +389,7 @@
           pstore (create-pstore es-url options)
           processor (processor-fn mstore pstore options tenant)
           process-file-fn (fn [file]
-                            (wlog/info "Processing path: " file)
+                            (wlog/info (str "Processing path: " file))
                             (when-not @wlog/print-log?
                               (prog/tick))
                             (process-file file root-dir mstore pstore tenant
@@ -331,10 +410,10 @@
           (wlog/unhandled-error e))
         (finally
           (shutdown mstore pstore)
-          (show-stats mstore pstore options))))
+          (show-stats mstore pstore (time/interval start-time (time/now))
+                      options))))
     (catch Exception e
-      (wlog/unhandled-error e)))
-  (wlog/exit 0))
+      (wlog/unhandled-error e))))
 
 (defn migrate
   "Do the migration."
@@ -346,25 +425,45 @@
       (println warn-str)
       (log/warn warn-str)))
   (process source tenant cass-host es-url options migrator "Starting migration"
-           "Migrating"))
+           "Migrating")
+  (wlog/exit 0))
 
 (defn validate
   "Do the validation."
   [source tenant cass-host es-url options]
   (process source tenant cass-host es-url options validator "Starting validation"
-           "Validating"))
+           "Validating")
+  (wlog/exit 0))
+
+(defn calc-size
+  "Do the Cassandra data size calculation."
+  [source tenant options]
+  (let [options (-> options
+                    (assoc :disable-path-store true)
+                    (assoc :disable-log true)
+                    (assoc :stop-on-error true))]
+    (process source tenant :true nil options calculator
+             "Starting Cassandra data size calculation"
+             "Calculating"))
+  (newline)
+  (println "Estimated Cassandra data size:"
+           (humanize/filesize @cassandra-data-size))
+  (println "Number of points:" @points-count)
+  (println "Don't forget to multiply size by replication factor!")
+  (wlog/exit 0))
 
 (defn list-files
   "List files."
   [dir]
   (doseq [path (sort (whisper/get-paths dir))]
-    (println (utils/get-cpath path))))
+    (println (fs/normalized path))))
 
 (defn list-paths
   "List paths."
-  [dir]
-  (doseq [path (sort (whisper/get-paths dir))]
-    (println (whisper/file-to-name path dir))))
+  [source options]
+  (let [[root-dir files] (get-root-dir-and-files source options)]
+    (doseq [file (sort files)]
+      (println (whisper/file-to-name file root-dir)))))
 
 (defn show-info
   "Show path info."

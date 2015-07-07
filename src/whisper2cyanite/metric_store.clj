@@ -1,22 +1,26 @@
 (ns whisper2cyanite.metric-store
-  (:require [qbits.alia :as alia]
+  (:require [whisper2cyanite.logging :as wlog]
+            [qbits.alia :as alia]
             [qbits.alia.policy.load-balancing :as alia_lbp]
             [clojure.core.async :as async]
+            [throttler.core :as trtl]
             [clojure.tools.logging :as log]
             [clojure.string :as str]
-            [whisper2cyanite.utils :as utils]
-            [whisper2cyanite.logging :as wlog])
+            [whisper2cyanite.utils :as utils])
   (:import [com.datastax.driver.core
-            PreparedStatement]))
+            PreparedStatement
+            BatchStatement]))
 
 (defprotocol MetricStore
-  (insert [this tenant rollup period path time value ttl file])
+  (insert [this tenant rollup period path timeseries file])
   (fetch-series [this tenant rollup period path from to file])
   (get-stats [this])
   (shutdown [this]))
 
 (def ^:const default-cassandra-keyspace "metric")
-(def ^:const default-cassandra-channel-size 10000)
+(def ^:const default-cassandra-channel-size 500000)
+(def ^:const default-cassandra-batch-size 1000)
+(def ^:const default-cassandra-batch-rate nil)
 (def ^:const default-cassandra-options {})
 
 (def insert-cql
@@ -26,7 +30,7 @@
 
 (def fetch-cql
   (str "SELECT data, time FROM metric WHERE "
-       "tenant = '%s' AND rollup = %s  AND  period = %s AND "
+       "tenant = '%s' AND rollup = %s AND period = %s AND "
        "path = '%s' AND time >= %s AND time <= %s;"))
 
 (defn- get-cassandra-insert
@@ -34,47 +38,55 @@
   [session]
   (alia/prepare session insert-cql))
 
+(defn- batch
+  "Create a batch of prepared statements"
+  [^PreparedStatement statement values]
+  (let [batch-statement (BatchStatement.)]
+    (doseq [value values]
+      (.add batch-statement (.bind statement (into-array Object value))))
+    batch-statement))
+
 (defn- log-error
   "Log a error."
-  [stats-error-files file error rollup period path time]
+  [stats-error-files file error rollup period path]
   (swap! stats-error-files conj file)
   (wlog/error (str "Metric store error: " error ", "
                    "rollup " rollup ", "
                    "period: " period ", "
-                   "path: " path ", "
-                   "time: " time)))
+                   "path: " path) error))
 
 (defn- get-channel
   "Get store channel."
-  [session statement chan-size data-stored? stats-error-files]
-  (let [ch (async/chan chan-size)]
+  [session statement chan-size batch-rate data-stored? stats-error-files run]
+  (let [ch-in (async/chan chan-size)
+        ch (if batch-rate (trtl/throttle-chan ch-in batch-rate :second) ch-in)]
     (utils/go-while (not @data-stored?)
                     (let [data (async/<! ch)]
                       (if data
-                        (let [value (:value data)
-                              [_ _ tenant rollup period path time] value
-                              file (:file data)]
+                        (let [{:keys [values rollup period path file]} data]
                           (try
-                            (async/take!
-                             (alia/execute-chan session statement
-                                                {:values value
-                                                 :consistency :any})
-                             (fn [rows-or-e]
-                               (if (instance? Throwable rows-or-e)
-                                 (log-error stats-error-files file rows-or-e
-                                            rollup period path time))))
+                            (let [query (batch statement values)]
+                              (when run
+                                (async/take!
+                                 (alia/execute-chan session
+                                                    {:consistency :any})
+                                 (fn [rows-or-e]
+                                   (if (instance? Throwable rows-or-e)
+                                     (log-error stats-error-files file rows-or-e
+                                                rollup period path))))))
                             (catch Exception e
                               (log-error stats-error-files file e rollup period
-                                         path time))))
+                                         path))))
                         (when (not @data-stored?)
                           (swap! data-stored? (fn [_] true))))))
-    ch))
+    ch-in))
 
 (defn cassandra-metric-store
   "Cassandra metric store."
   [hosts options]
   (log/info "Creating the metric store...")
-  (let [keyspace (:cassandra-keyspace options default-cassandra-keyspace)
+  (let [run (:run options false)
+        keyspace (:cassandra-keyspace options default-cassandra-keyspace)
         c-options (merge {:contact-points hosts}
                          default-cassandra-options
                          (:cassandra-options options {}))
@@ -83,31 +95,44 @@
                     (alia/connect keyspace))
         insert! (get-cassandra-insert session)
         chan-size (:cassandra-channel-size options default-cassandra-channel-size)
+        batch-size (:cassandra-batch-size options default-cassandra-batch-size)
+        chan-size-batches (utils/ceil (/ chan-size batch-size))
+        batch-rate (:cassandra-batch-rate options default-cassandra-batch-rate)
         data-stored? (atom false)
         stats-error-files (atom (sorted-set))
         stats-processed (atom 0)
-        channel (get-channel session insert! chan-size data-stored?
-                             stats-error-files)]
+        channel (get-channel session insert! chan-size-batches batch-rate
+                             data-stored? stats-error-files run)]
     (log/info (str "The metric store has been created. "
                    "Keyspace: " keyspace ", "
-                   "channel size: " chan-size))
+                   "channel size: " chan-size ", "
+                   "batch size: " batch-size ", "
+                   "batch rate: " batch-rate))
     (reify
       MetricStore
-      (insert [this tenant rollup period path time value ttl file]
+      (insert [this tenant rollup period path timeseries file]
         (try
-          (swap! stats-processed inc)
-          (async/>!! channel {:value [(int ttl) [(double value)] (str tenant)
-                                      (int rollup) (int period) (str path)
-                                      (long time)]
-                              :file file})
+          (let [series (map #(let [[time value ttl] %]
+                               [(int ttl) [(double value)] tenant (int rollup)
+                                (int period) path (long time)])
+                            timeseries)
+                batches (partition-all batch-size series)]
+            (doseq [values batches]
+              (swap! stats-processed + (count values))
+              (async/>!! channel {:values values
+                                  :rollup rollup
+                                  :period period
+                                  :path path
+                                  :file file})))
           (catch Exception e
-            (log-error stats-error-files file e rollup period path time))))
+            (log-error stats-error-files file e rollup period path))))
       (fetch-series [this tenant rollup period path from to file]
         (try
           (swap! stats-processed inc)
-          (let [series (atom {})]
-            (let [rows (.execute session (format fetch-cql tenant rollup period
-                                                 path from to))
+          (let [series (atom {})
+                cql (format fetch-cql tenant rollup period path from to)]
+            (log/debug "Fetch series CQL:" cql)
+            (let [rows (.execute session cql)
                   first-row (.one rows)]
               (when first-row
                 (loop [row first-row]
@@ -118,8 +143,8 @@
                       (recur (.one rows)))))))
             @series)
           (catch Exception e
-            (swap! stats-error-files conj file)
-            (wlog/error "Metric store error: " e))))
+            (log-error stats-error-files file e rollup period path)
+            :mstore-error)))
       (get-stats [this]
         {:processed @stats-processed
          :error-files @stats-error-files})

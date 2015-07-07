@@ -3,10 +3,8 @@
             [clojurewerkz.elastisch.rest.index :as esri]
             [clojurewerkz.elastisch.rest.document :as esrd]
             [clojure.string :as str]
-            [clojure.core.async :as async]
             [clojure.tools.logging :as log]
-            [whisper2cyanite.logging :as wlog]
-            [whisper2cyanite.utils :as utils]))
+            [whisper2cyanite.logging :as wlog]))
 
 (defprotocol PathStore
   (insert [this tenant path file])
@@ -14,7 +12,6 @@
   (get-stats [this])
   (shutdown [this]))
 
-(def ^:const default-es-channel-size 10000)
 (def ^:const default-es-index "cyanite_paths")
 (def ^:const es-def-type "path")
 
@@ -45,7 +42,7 @@
   "Log a error."
   [stats-error-files file error path]
   (swap! stats-error-files conj file)
-  (wlog/error (format "Path store error: %s, path: %s" error path)))
+  (wlog/error (format "Path store error: %s, path: %s" error path) error))
 
 (defn- put-path
   "Put a path."
@@ -53,49 +50,28 @@
   (let [path (:path body)
         id (constuct-id (:tenant body) path)]
     (when-not (exists-fn id)
-      (let [return (update-fn id body)
+      (let [return (when update-fn (update-fn id body))
             status (:status return)]
         (when (and status (>= status 400))
           (log-error stats-error-files file
                      (str (:error return) ", status: " status
                           ", file: "file ) path))))))
 
-(defn- get-channel
-  "Get a store channel."
-  [exists-fn update-fn chan-size data-stored? stats-error-files]
-  (let [ch (async/chan chan-size )]
-    (utils/go-while (not @data-stored?)
-                    (let [value (async/<! ch)]
-                      (if value
-                        (let [[tenant path file] value]
-                          (try
-                            (dorun (map #(put-path exists-fn update-fn %
-                                                   stats-error-files file)
-                                        (get-all-paths tenant path)))
-                            (catch Exception e
-                              (log-error stats-error-files file e path))))
-                        (when (not @data-stored?)
-                          (swap! data-stored? (fn [_] true))))))
-    ch))
-
 (defn elasticsearch-metric-store
   "Create an Elasticsearch path store."
   [url options]
   (log/info "Creating the path store...")
-  (let [index (:elasticsearch-index options default-es-index)
+  (let [run (:run options false)
+        index (:elasticsearch-index options default-es-index)
         conn (esr/connect url)
         exists-fn (partial esrd/present? conn index es-def-type)
-        update-fn (partial esrd/put conn index es-def-type)
-        chan-size (:elasticsearch-channel-size options default-es-channel-size)
+        update-fn (if run (partial esrd/put conn index es-def-type) nil)
         data-stored? (atom false)
         stats-error-files (atom (sorted-set))
-        stats-processed (atom 0)
-        channel (get-channel exists-fn update-fn chan-size data-stored?
-                             stats-error-files)]
+        stats-processed (atom 0)]
     (log/info (str "The path store has been created. "
                    "URL: " url ", "
-                   "index: " index ", "
-                   "channel size: " chan-size))
+                   "index: " index))
     (when-not (esri/exists? conn index)
       (log/info "Creating the path index...")
       (esri/create conn index :mappings es-type-map)
@@ -105,7 +81,9 @@
       (insert [this tenant path file]
         (try
           (swap! stats-processed inc)
-          (async/>!! channel [tenant path file])
+          (dorun (map #(put-path exists-fn update-fn %
+                                 stats-error-files file)
+                      (get-all-paths tenant path)))
           (catch Exception e
             (log-error stats-error-files file e path))))
       (exist? [this tenant path file]
@@ -113,13 +91,11 @@
           (swap! stats-processed inc)
           (exists-fn (constuct-id tenant path))
           (catch Exception e
-            (log-error stats-error-files file e path))))
+            (log-error stats-error-files file e path)
+            :pstore-error)))
       (get-stats [this]
         {:processed @stats-processed
          :error-files @stats-error-files})
       (shutdown [this]
         (log/info "Shutting down the path store...")
-        (async/close! channel)
-        (while (not @data-stored?)
-          (Thread/sleep 100))
         (log/info "The path store has been down")))))
