@@ -531,7 +531,7 @@ whisper2cyanite --disable-path-store --root-dir /var/lib/whisper/ migrate \
 
 ## License
 
-whisper2cyanite is covered by [MIT License](https://github.com/cybem/whisper2cyanite/blob/master/LICENSE)
+whisper2cyanite is covered by [MIT License](https://raw.githubusercontent.com/cybem/whisper2cyanite/master/LICENSE)
 
 ## Thanks
 
