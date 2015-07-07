@@ -504,6 +504,7 @@
         (let [series (-> (whisper/fetch-archive-seq-ra ra-file file archive
                                                        from to)
                          (:series)
+                         (whisper/remove-nulls)
                          (whisper/sort-series))]
           (doseq [point series]
             (let [time (first point)
