@@ -76,6 +76,9 @@ Built package will be placed in the `target` directory.
     whisper2cyanite [options] fetch <whisper_file> <rollup>
     whisper2cyanite help
 
+For more info see [commands](#commands), [arguments](#arguments) and
+[options](#options).
+
 ### Commands
 
 * [migrate](#migrate)
@@ -197,6 +200,9 @@ A Whisper database file (`.wsp`).
 
 #### `filelist_file`
 
+A plain text file with a list of Whisper database files (`.wsp`). One file per
+line.
+
 #### `tenant`
 
 A tenant name.
@@ -209,7 +215,7 @@ Example: cass1.example.org,cass2.example.org
 
 #### `elasticsearch_url`
 
-An Elasticsearch host URL.
+An Elasticsearch REST service URL.
 
 Example: http://es.example.org:9200
 
