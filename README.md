@@ -400,7 +400,12 @@ Archives:
 
 #### Fetching Timeseries from a Whisper Database File for a Predetermined Period
 
+Fetch timeseries between `1428407040` (07 Apr 2015 11:44:00 GMT) and
+`1433757900` (08 Jun 2015 10:05:00 GMT) from rollup `60` of the
+`/var/lib/whisper/requests/nginx/access.wsp` Whisper database file:
+
 ```bash
+whisper2cyanite --from 1428407040 --to 1433757900 fetch /var/lib/whisper/requests/nginx/access.wsp 60
 ```
 
 ### Migrating
