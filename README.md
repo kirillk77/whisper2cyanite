@@ -428,7 +428,7 @@ Estimating Cassandra data size from a Whisper database located in the
 `/var/lib/whisper/` directory:
 
 ```bash
-whisper2cyanite calc-size --jobs 8 /var/lib/whisper/ 'my_tenant'
+whisper2cyanite calc-size --jobs 8 /var/lib/whisper/ my_tenant
 ```
 
 Using 8 jobs to speed up the process. Tenant is named as `my_tenant`.
@@ -483,7 +483,7 @@ this:
 ```bash
 whisper2cyanite --run --jobs 8 --rollups 60:5356800,900:6220800 --min-ttl 18000 \
   --cassandra-options "{:compression :lz4}" --errors-file error-files.lst \
-  migrate /var/lib/whisper/ 'my_tenant' cass1.example.org,cass2.example.org \
+  migrate /var/lib/whisper/ my_tenant cass1.example.org,cass2.example.org \
   http://es.example.org:9200
 ```
 
@@ -507,7 +507,7 @@ This command means:
 ```bash
 whisper2cyanite --run --jobs 8 --rollups 60:5356800,900:6220800 --min-ttl 18000 \
   --cassandra-options "{:compression :lz4}" --root-dir /var/lib/whisper/ \
-  migrate error-files.lst 'my_tenant' cass1.example.org,cass2.example.org \
+  migrate error-files.lst my_tenant cass1.example.org,cass2.example.org \
   http://es.example.org:9200
 ```
 
@@ -530,7 +530,7 @@ subtree) will be migrated. Metric store operations are disabled.
 
 ```bash
 whisper2cyanite --run --jobs 8 --disable-metric-store --root-dir \
-  /var/lib/whisper/ migrate path-files.lst 'my_tenant' cass1.example.org \
+  /var/lib/whisper/ migrate path-files.lst my_tenant cass1.example.org \
   http://es.example.org:9200
 ```
 
@@ -544,7 +544,7 @@ disabled.
 ```bash
 whisper2cyanite --run --rollups 60:5356800 --disable-path-store \
   --root-dir /var/lib/whisper/ --from 1420070400 --to 1421280000 migrate \
-  /var/lib/whisper/requests/nginx/access.wsp 'my_tenant' \
+  /var/lib/whisper/requests/nginx/access.wsp my_tenant \
   cass1.example.org,cass2.example.org http://es.example.org:9200
 ```
 
@@ -558,7 +558,7 @@ Typical command for validating a whole database:
 
 ```bash
 whisper2cyanite --jobs 8 --cassandra-options "{:compression :lz4}" \
-  --errors-file error-files.lst validate /var/lib/whisper/ 'my_tenant' \
+  --errors-file error-files.lst validate /var/lib/whisper/ my_tenant \
   cass1.example.org,cass2.example.org http://es.example.org:9200
 ```
 
@@ -569,7 +569,7 @@ Validating paths from the `/var/lib/whisper/requests/nginx` directory (the
 
 ```bash
 whisper2cyanite --jobs 8 --disable-metric-store --root-dir /var/lib/whisper/ \
-  validate /var/lib/whisper/requests/nginx 'my_tenant' cass1.example.org \
+  validate /var/lib/whisper/requests/nginx my_tenant cass1.example.org \
   http://es.example.org:9200
 ```
 
@@ -579,7 +579,7 @@ Validating metrics from the `/var/lib/whisper/requests/nginx/access.wsp` file:
 
 ```bash
 whisper2cyanite --disable-path-store --root-dir /var/lib/whisper/ migrate \
-  /var/lib/whisper/requests/nginx/access.wsp 'my_tenant' \
+  /var/lib/whisper/requests/nginx/access.wsp my_tenant \
   cass1.example.org,cass2.example.org http://es.example.org:9200
 ```
 
