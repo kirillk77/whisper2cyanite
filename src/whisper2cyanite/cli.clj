@@ -12,7 +12,18 @@
 (def cli-commands #{"migrate" "validate" "calc-size" "list-files" "list-paths"
                     "info" "fetch" "help"})
 
-(declare parse-rollups check-rollups)
+(defn- check-rollups
+  "Check rollups."
+  [rollups]
+  (not-any? nil? rollups))
+
+(defn- parse-rollups
+  "Parse rollups."
+  [rollups]
+  (->> (str/split rollups #",")
+       (map #(re-matches #"^((\d+)(:(\d+))*)$" %))
+       (map #(if % [(Integer/parseInt (nth % 2))
+                    (Integer/parseInt (nth % 4))] %))))
 
 (def cli-options
   [["-f" "--from FROM" "From time (Unix epoch)"
@@ -67,19 +78,6 @@
    ["-S" "--stop-on-error" "Stop on first non-fatal error"]
    ["-P" "--disable-progress" "Disable progress bar"]
    ["-h" "--help" "Show this help"]])
-
-(defn- check-rollups
-  "Check rollups."
-  [rollups]
-  (not-any? nil? rollups))
-
-(defn- parse-rollups
-  "Parse rollups."
-  [rollups]
-  (->> (str/split rollups #",")
-       (map #(re-matches #"^((\d+)(:(\d+))*)$" %))
-       (map #(if % [(Integer/parseInt (nth % 2))
-                    (Integer/parseInt (nth % 4))] %))))
 
 (defn- usage
   "Construct usage message."
