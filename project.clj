@@ -13,7 +13,7 @@
                  [net.jpountz.lz4/lz4 "1.3.0"]
                  [org.xerial.snappy/snappy-java "1.1.1.7"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                 [clojurewerkz/elastisch "2.1.0"]
+                 [clojurewerkz/elastisch "2.2.0-beta4"]
                  [com.climate/claypoole "1.0.0"]
                  [me.raynes/fs "1.4.6"]
                  [throttler "1.0.0"]
