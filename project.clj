@@ -17,7 +17,7 @@
                  [com.climate/claypoole "0.4.0"]
                  [me.raynes/fs "1.4.6"]
                  [throttler "1.0.0"]
-                 [intervox/clj-progress "0.1.6"]
+                 [intervox/clj-progress "0.2.1"]
                  [clojure-humanize "0.1.0"]]
   :main ^:skip-aot whisper2cyanite.cli
   :target-path "target/%s"
