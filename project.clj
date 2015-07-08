@@ -4,7 +4,7 @@
   :license {:name "MIT License"
             :url "https://github.com/cybem/whisper2cyanite/blob/master/LICENSE"}
   :maintainer {:email "cybem@cybem.info"}
-  :dependencies [[org.clojure/clojure "1.6.0"]
+  :dependencies [[org.clojure/clojure "1.7.0"]
                  [clj-whisper "0.2.1"]
                  [org.clojure/tools.cli "0.3.1"]
                  [org.clojure/tools.logging "0.3.1"]
