@@ -25,7 +25,7 @@
    ["-R" "--rollups ROLLUPS"
     "Define rollups. Format: <seconds_per_point[:retention],...> Example: 60,300:31536000"
     :parse-fn #(parse-rollups %)
-    :validate [check-rollups "Invalid rollup"]]
+    :validate [check-rollups "Invalid rollup(s)"]]
    ["-j" "--jobs JOBS" "Number of jobs to run simultaneously"
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 %) "Must be a number > 0"]]
