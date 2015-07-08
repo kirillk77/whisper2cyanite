@@ -22,7 +22,7 @@ whisper2cyanite is a tool for migrating data from
   * [Inspecting](#inspecting)
     * [Listing Paths from a Whisper Database](#listing-paths-from-a-whisper-database)
     * [Estimating Cassandra Data Size from a Whisper Database](#estimating-cassandra-data-size-from-a-whisper-database)
-    * [Getting Info About a Whisper Database File](#getting-info-about-a-whisper-database-file)
+    * [Getting Information About a Whisper Database File](#getting-information-about-a-whisper-database-file)
     * [Fetching Timeseries from a Whisper Database File for a Predetermined Period](#fetching-timeseries-from-a-whisper-database-file-for-a-predetermined-period)
   * [Migrating](#migrating)
     * [Migrating a Whole Database](#migrating-a-whole-database)
@@ -77,7 +77,7 @@ Built package will be placed in the `target` directory.
     whisper2cyanite [options] fetch <whisper_file> <rollup>
     whisper2cyanite help
 
-For more info see [commands](#commands), [arguments](#arguments) and
+For more information see [commands](#commands), [arguments](#arguments) and
 [options](#options).
 
 ### Commands
@@ -436,9 +436,10 @@ whisper2cyanite calc-size --jobs 8 /var/lib/whisper/ my_tenant
 
 Using 8 jobs to speed up the process. Tenant is named as `my_tenant`.
 
-#### Getting Info About a Whisper Database File
+#### Getting Information About a Whisper Database File
 
-Getting info about the `/var/lib/whisper/requests/nginx/access.wsp` Whisper database file
+Getting information about the `/var/lib/whisper/requests/nginx/access.wsp`
+Whisper database file
 
 ```bash
 whisper2cyanite info /var/lib/whisper/requests/nginx/access.wsp
