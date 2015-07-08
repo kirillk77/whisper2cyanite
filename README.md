@@ -1,5 +1,6 @@
 # whisper2cyanite
 
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/cybem/whisper2cyanite/master/LICENSE)
 [![Build Status](https://travis-ci.org/cybem/whisper2cyanite.svg?branch=master)](https://travis-ci.org/cybem/whisper2cyanite)
 [![Dependencies Status](http://jarkeeper.com/cybem/whisper2cyanite/status.svg)](http://jarkeeper.com/cybem/whisper2cyanite)
 
