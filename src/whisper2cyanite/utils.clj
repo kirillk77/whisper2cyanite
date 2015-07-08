@@ -16,7 +16,7 @@
 (defn extract-directory
   "Extract a directory from a path."
   [path]
-  (if (fs/directory? path) path (str (fs/parent path))))
+  (if (fs/directory? path) (str path) (str (fs/parent path))))
 
 (defn whisper?
   "Is the file a Whisper database?"

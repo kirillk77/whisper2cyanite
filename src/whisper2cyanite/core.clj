@@ -240,7 +240,7 @@
         root-dir (:root-dir options nil)]
     (if-not root-dir
       dir
-      (let [root-dir-c (fs/normalized root-dir)]
+      (let [root-dir-c (str (fs/normalized root-dir))]
         (when (or (> (count root-dir-c) (count dir))
                   (not= (subs dir 0 (count root-dir-c)) root-dir-c))
           (throw (Exception. (str "Invalid root directory: " root-dir))))
@@ -457,7 +457,7 @@
   "List files."
   [dir]
   (doseq [path (sort (whisper/get-paths dir))]
-    (println (fs/normalized path))))
+    (println (str (fs/normalized path)))))
 
 (defn list-paths
   "List paths."
