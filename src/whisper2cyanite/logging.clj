@@ -26,6 +26,7 @@
   (swap! stop-on-error? (fn [_] (:stop-on-error options @stop-on-error?)))
   (if-not @disable-log?
     (logconfig/start-logging! {:level (:log-level options default-log-level)
+                               :console false
                                :files [(:log-file options default-log-file)]})
     (log-disable-logging!)))
 
