@@ -213,19 +213,19 @@ A tenant name.
 
 A comma-separated list of Cassandra hosts.
 
-Example: cass1.example.org,cass2.example.org
+Example: `cass1.example.org,cass2.example.org`
 
 #### `elasticsearch_url`
 
 An Elasticsearch REST service URL.
 
-Example: http://es.example.org:9200
+Example: `http://es.example.org:9200`
 
 #### `rollup`
 
 A rollup (seconds per data point).
 
-Example: 60
+Example: `60`
 
 ### Options
 
@@ -292,7 +292,7 @@ Default: `metric`
 
 Set Cassandra options.
 
-Example: "{:compression :lz4}"
+Example: `"{:compression :lz4}"`
 
 #### `disable-metric-store`
 
@@ -341,7 +341,7 @@ Dump a list of files during processing which the errors occurred.
 Set from time in the
 [Unix (POSIX, epoch) time](https://en.wikipedia.org/wiki/Unix_time) format.
 
-Example: 1420070400
+Example: `1420070400`
 
 #### `jobs`
 
@@ -385,7 +385,7 @@ Define rollups.
 
 Format: `<seconds_per_point[:retention],...>`
 
-Example: 60,300:31536000
+Example: `60,300:31536000`
 
 #### `root-dir`
 
@@ -397,7 +397,7 @@ Set the root directory.
 
 `-r`, `--run`
 
-Force a normal run. **Dry run using on default**.
+Force a normal run. **Dry run using on default.**
 
 #### `to`
 
@@ -406,7 +406,7 @@ Force a normal run. **Dry run using on default**.
 Set until time in the
 [Unix (POSIX, epoch) time](https://en.wikipedia.org/wiki/Unix_time) format.
 
-Example: 1421280000
+Example: `1421280000`
 
 #### `stop-on-error`
 
