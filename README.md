@@ -291,7 +291,7 @@ Default: `metric`
 `-O`, `--cassandra-options` `OPTIONS`
 
 Set Cassandra options. See
-[Alia documentation](#https://mpenet.github.io/alia/qbits.alia.html#var-cluster)
+[Alia documentation](https://mpenet.github.io/alia/qbits.alia.html#var-cluster)
 for more details.
 
 Example: `"{:compression :lz4}"`
