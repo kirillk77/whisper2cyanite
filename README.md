@@ -428,6 +428,8 @@ Listing paths taken from the `/var/lib/whisper/` directory in alphabet order:
 whisper2cyanite list-paths /var/lib/whisper/
 ```
 
+See command [`list-paths`](#list-paths) for more details.
+
 #### Estimating Cassandra Data Size from a Whisper Database
 
 Estimating Cassandra data size from a Whisper database located in the
@@ -438,6 +440,8 @@ whisper2cyanite calc-size --jobs 8 /var/lib/whisper/ my_tenant
 ```
 
 Using 8 jobs to speed up the process. Tenant is named as `my_tenant`.
+
+See command [`calc-size`](#calc-size) for more details.
 
 #### Getting Information About a Whisper Database File
 
@@ -469,6 +473,8 @@ Archives:
     Size:              420480
 ```
 
+See command [`info`](#info) for more details.
+
 #### Fetching Timeseries from a Whisper Database File for a Predetermined Period
 
 Fetch timeseries between `1428407040` (07 Apr 2015 11:44:00 GMT) and
@@ -479,6 +485,8 @@ Fetch timeseries between `1428407040` (07 Apr 2015 11:44:00 GMT) and
 whisper2cyanite --from 1428407040 --to 1433757900 fetch \
   /var/lib/whisper/requests/nginx/access.wsp 60
 ```
+
+See command [`fetch`](#fetch) for more details.
 
 ### Migrating
 
@@ -509,6 +517,8 @@ This command means:
 * Use two Cassandra nodes: `cass1.example.org` and `cass2.example.org`
 * Use the Elasticsearch node on `http://es.example.org:9200`
 
+See command [`migrate`](#migrate) for more details.
+
 #### Retrying to Migrate After Non-fatal Errors Occurred
 
 ```bash
@@ -521,6 +531,8 @@ whisper2cyanite --run --jobs 8 --rollups 60:5356800,900:6220800 --min-ttl 18000 
 This command means same as above but:
 * Set database root to the `/var/lib/whisper/` directory
 * Read files to migrate from the `errorfiles.lst` file
+
+See command [`migrate`](#migrate) for more details.
 
 #### Migrating Paths Taken from a Database Subtree
 
@@ -541,6 +553,9 @@ whisper2cyanite --run --jobs 8 --disable-metric-store --root-dir \
   http://es.example.org:9200
 ```
 
+See commands [`list-files`](#list-files) and [`migrate`](#migrate) for more
+details.
+
 #### Migrating Metrics for a Predetermined Period and a Single Rollup from a Database File
 
 Migrating metrics from the `/var/lib/whisper/requests/nginx/access.wsp` file
@@ -554,6 +569,8 @@ whisper2cyanite --run --rollups 60:5356800 --disable-path-store \
   /var/lib/whisper/requests/nginx/access.wsp my_tenant \
   cass1.example.org,cass2.example.org http://es.example.org:9200
 ```
+
+See command [`migrate`](#migrate) for more details.
 
 ### Validating
 
@@ -569,6 +586,8 @@ whisper2cyanite --jobs 8 --cassandra-options "{:compression :lz4}" \
   cass1.example.org,cass2.example.org http://es.example.org:9200
 ```
 
+See command [`validate`](#validate) for more details.
+
 #### Validating Paths Taken from a Database Subtree
 
 Validating paths from the `/var/lib/whisper/requests/nginx` directory (the
@@ -580,15 +599,19 @@ whisper2cyanite --jobs 8 --disable-metric-store --root-dir /var/lib/whisper/ \
   http://es.example.org:9200
 ```
 
+See command [`validate`](#validate) for more details.
+
 #### Validating Metrics of a Single Path
 
 Validating metrics from the `/var/lib/whisper/requests/nginx/access.wsp` file:
 
 ```bash
-whisper2cyanite --disable-path-store --root-dir /var/lib/whisper/ migrate \
+whisper2cyanite --disable-path-store --root-dir /var/lib/whisper/ validate \
   /var/lib/whisper/requests/nginx/access.wsp my_tenant \
   cass1.example.org,cass2.example.org http://es.example.org:9200
 ```
+
+See command [`validate`](#validate) for more details.
 
 ## License
 
