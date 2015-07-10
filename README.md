@@ -440,6 +440,8 @@ Stop on the first non-fatal error.
 
 ### Inspecting
 
+Before migrating data, you may want to inspect the Whisper database.
+
 #### Listing Paths from a Whisper Database
 
 Listing paths taken from the `/var/lib/whisper/` directory in alphabet order:
