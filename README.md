@@ -98,8 +98,8 @@ Migrate a Whisper database to a metric store, a path store or both.
 
 *`whisper2cyanite` `migrate`* \<[*`directory`*](#directory) |
 [*`whisper_file`*](#whisper_file) | [*`filelist_file`*](#filelist_file)\>
-\<[*`tenant`*](#tenant)\> \<[*`cassandra_host(s)`*](#cassandra_hosts)\>
-\<[*`elasticsearch_url`*](#elasticsearch_url)\>
+[*`tenant`*](#tenant) [*`cassandra_host(s)`*](#cassandra_hosts)
+[*`elasticsearch_url`*](#elasticsearch_url)
 
 Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 [`cassandra-batch-size`](#cassandra-batch-size),
@@ -121,10 +121,10 @@ Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 Validate a metric store, a path store or both, comparing points and paths from
 a Whisper database and Cyanite storages.
 
-Arguments: [`directory`](#directory) or [`whisper_file`](#whisper_file) or
-[`filelist_file`](#filelist_file), [`tenant`](#tenant),
-[`cassandra_host(s)`](#cassandra_hosts),
-[`elasticsearch_url`](#elasticsearch_url).
+*`whisper2cyanite` `validate`* \<[*`directory`*](#directory) |
+[*`whisper_file`*](#whisper_file) | [*`filelist_file`*](#filelist_file)\>
+[*`tenant`*](#tenant) [*`cassandra_host(s)`*](#cassandra_hosts)
+[*`elasticsearch_url`*](#elasticsearch_url)
 
 Available options: [`cassandra-keyspace`](#cassandra-keyspace),
 [`cassandra-options`](#cassandra-options), [`disable-log`](#disable-log),
@@ -179,6 +179,8 @@ Available options: [`from`](#from),
 [`to`](#to).
 
 #### `help`
+
+*`whisper2cyanite` `help`*
 
 Show help.
 
