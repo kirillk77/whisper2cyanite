@@ -96,8 +96,8 @@ more details.
 
 Migrate a Whisper database to a metric store, a path store or both.
 
-*`whisper2cyanite` `migrate`* \<[*`directory`*](#directory) |
-[*`whisper_file`*](#whisper_file) | [*`filelist_file`*](#filelist_file)\>
+*`whisper2cyanite` `migrate`* \<[*`directory`*](#directory) or
+[*`whisper_file`*](#whisper_file) or [*`filelist_file`*](#filelist_file)\>
 [*`tenant`*](#tenant) [*`cassandra_host(s)`*](#cassandra_hosts)
 [*`elasticsearch_url`*](#elasticsearch_url)
 
@@ -140,8 +140,9 @@ Available options: [`cassandra-keyspace`](#cassandra-keyspace),
 
 Calculate Cassandra data size from a Whisper database.
 
-Arguments: [`directory`](#directory) or [`whisper_file`](#whisper_file) or
-[`filelist_file`](#filelist_file), [`tenant`](#tenant).
+*`whisper2cyanite` `calc-size`* \<[*`directory`*](#directory) or
+[*`whisper_file`*](#whisper_file) or [*`filelist_file`*](#filelist_file)\>
+[*`tenant`*](#tenant)
 
 Available options: [`disable-progress`](#disable-progress), [`jobs`](#jobs),
 [`rollups`](#rollups), [`root-dir`](#root-dir).
@@ -150,22 +151,22 @@ Available options: [`disable-progress`](#disable-progress), [`jobs`](#jobs),
 
 List Whisper database files taken from a `source`.
 
-Arguments: [`directory`](#directory) or [`whisper_file`](#whisper_file) or
-[`filelist_file`](#filelist_file).
+*`whisper2cyanite` `list-files`* \<[*`directory`*](#directory) or
+[*`whisper_file`*](#whisper_file) or [*`filelist_file`*](#filelist_file)\>
 
 #### `list-paths`
 
 List paths taken from a `source`. The `root-dir` option can be passed to have
 correct paths being computed from filenames.
 
-Arguments: [`directory`](#directory) or [`whisper_file`](#whisper_file) or
-[`filelist_file`](#filelist_file).
+*`whisper2cyanite` `list-paths`* \<[*`directory`*](#directory) or
+[*`whisper_file`*](#whisper_file) or [*`filelist_file`*](#filelist_file)\>
 
 Available options: [`root-dir`](#root-dir).
 
 #### `info`
 
-Arguments: [`whisper_file`](#whisper_file).
+*`whisper2cyanite` `info`* [*`whisper_file`*](#whisper_file)
 
 Show Whisper database file information.
 
@@ -173,7 +174,7 @@ Show Whisper database file information.
 
 Fetch timeseries from a Whisper database file.
 
-Arguments: [`whisper_file`](#whisper_file).
+*`whisper2cyanite` `fetch`* [*`whisper_file`*](#whisper_file)
 
 Available options: [`from`](#from),
 [`to`](#to).
