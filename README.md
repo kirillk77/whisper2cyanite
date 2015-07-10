@@ -121,8 +121,8 @@ Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 Validate a metric store, a path store or both, comparing points and paths from
 a Whisper database and Cyanite storages.
 
-*`whisper2cyanite` `validate`* \<[*`directory`*](#directory) |
-[*`whisper_file`*](#whisper_file) | [*`filelist_file`*](#filelist_file)\>
+*`whisper2cyanite` `validate`* \<[*`directory`*](#directory) or
+[*`whisper_file`*](#whisper_file) or [*`filelist_file`*](#filelist_file)\>
 [*`tenant`*](#tenant) [*`cassandra_host(s)`*](#cassandra_hosts)
 [*`elasticsearch_url`*](#elasticsearch_url)
 
