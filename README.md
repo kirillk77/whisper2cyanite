@@ -556,7 +556,8 @@ whisper2cyanite --run --jobs 8 --disable-metric-store --root-dir \
 See commands [`list-files`](#list-files) and [`migrate`](#migrate) for more
 details.
 
-#### Migrating Metrics for a Predetermined Period and a Single Rollup from a Database File
+#### Migrating Metrics for a Predetermined Period and a Single Rollup from a
+     Database File
 
 Migrating metrics from the `/var/lib/whisper/requests/nginx/access.wsp` file
 for period from `1420070400` (01 Jan 2015 00:00:00) until `1421280000` (15 Jan
