@@ -117,6 +117,8 @@ Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 [`root-dir`](#root-dir), [`run`](#run), [`to`](#to),
 [`stop-on-error`](#stop-on-error).
 
+See example of usage [here](#migrating).
+
 #### `validate`
 
 Validate a metric store, a path store or both, comparing points and paths from
@@ -138,6 +140,8 @@ Available options: [`cassandra-keyspace`](#cassandra-keyspace),
 [`log-level`](#log-level), [`min-ttl`](#min-ttl), [`rollups`](#rollups),
 [`root-dir`](#root-dir), [`to`](#to), [`stop-on-error`](#stop-on-error).
 
+See example of usage [here](#validating).
+
 #### `calc-size`
 
 Calculate Cassandra data size from a Whisper database.
@@ -149,12 +153,16 @@ Calculate Cassandra data size from a Whisper database.
 Available options: [`disable-progress`](#disable-progress), [`jobs`](#jobs),
 [`rollups`](#rollups), [`root-dir`](#root-dir).
 
+See example of usage [here](#estimating-cassandra-data-size-from-a-whisper-database).
+
 #### `list-files`
 
 List Whisper database files taken from a `source`.
 
 *`whisper2cyanite` `list-files`* \<[*`directory`*](#directory) |
 [*`whisper_file`*](#whisper_file) | [*`filelist_file`*](#filelist_file)\>
+
+See example of usage [here](#migrating-paths-taken-from-a-database-subtree).
 
 #### `list-paths`
 
@@ -167,11 +175,15 @@ correct paths being computed from filenames.
 
 Available options: [`root-dir`](#root-dir).
 
+See example of usage [here](#listing-paths-from-a-whisper-database).
+
 #### `info`
 
 *`whisper2cyanite` `info`* [*`whisper_file`*](#whisper_file)
 
 Show Whisper database file information.
+
+See example of usage [here](#getting-information-about-a-whisper-database-file).
 
 #### `fetch`
 
@@ -181,6 +193,8 @@ Fetch timeseries from a Whisper database file.
  [*`whisper_file`*](#whisper_file)
 
 Available options: [`from`](#from), [`to`](#to).
+
+See example of usage [here](#fetching-timeseries-from-a-whisper-database-file-for-a-predetermined-period).
 
 #### `help`
 
