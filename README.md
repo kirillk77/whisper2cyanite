@@ -96,10 +96,10 @@ more details.
 
 Migrate a Whisper database to a metric store, a path store or both.
 
-*`whisper2cyanite` `migrate`* *\<*[*`directory`*](#directory) |
-[*`whisper_file`*](#whisper_file) | [*`filelist_file`*](#filelist_file)*\>*
-[*`tenant`*](#tenant) [*`cassandra_host(s)`*](#cassandra_hosts)
-[*`elasticsearch_url`*](#elasticsearch_url)
+*`whisper2cyanite` `migrate`* \<[*`directory`*](#directory) |
+[*`whisper_file`*](#whisper_file) | [*`filelist_file`*](#filelist_file)\>
+\<[*`tenant`*](#tenant)\> \<[*`cassandra_host(s)`*](#cassandra_hosts)\>
+\<[*`elasticsearch_url`*](#elasticsearch_url)\>
 
 Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 [`cassandra-batch-size`](#cassandra-batch-size),
