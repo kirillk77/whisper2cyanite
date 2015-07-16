@@ -2,7 +2,7 @@
 
 set -e
 
-readonly VERSION=0.10.1
+readonly VERSION=0.10.2-SNAPSHOT
 readonly JAR_FILE="whisper2cyanite-$VERSION-standalone.jar"
 readonly JAVA_CMD="java -jar"
 
