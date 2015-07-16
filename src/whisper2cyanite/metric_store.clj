@@ -69,6 +69,7 @@
                               (when run
                                 (async/take!
                                  (alia/execute-chan session
+                                                    query
                                                     {:consistency :any})
                                  (fn [rows-or-e]
                                    (if (instance? Throwable rows-or-e)
